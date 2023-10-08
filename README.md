@@ -9,7 +9,7 @@ Use it to run GGUF and GMML LLM models on CPU-only instances including Graviton.
 
 ### Using public ECR image
 
-1. setup (pull-through cache)[https://docs.aws.amazon.com/AmazonECR/latest/userguide/pull-through-cache.html] for the ECR public repository. 
+1. setup [pull-through cache](https://docs.aws.amazon.com/AmazonECR/latest/userguide/pull-through-cache.html) for the ECR public repository. 
 
 2. Run `deploy_sagemaker_endpoint` notebook and follow instructions within the notebook. 
 
@@ -37,4 +37,4 @@ Follow the instructions in the provided notebook on how to load/inference that m
 
 ### Credits
 
-Built based on (project)[https://gitlab.aws.dev/seanbly/quantized-document-qa] of Sean Bradley and modified it to work with Sagemaker endpoints.
+Built based on [project](https://gitlab.aws.dev/seanbly/quantized-document-qa) of Sean Bradley and modified it to work with Sagemaker endpoints.
