@@ -1,0 +1,45 @@
+FROM ubuntu:22.04
+ENV DEBIAN_FRONTEND noninteractive
+
+# Sets dumping log messages directly to stream instead of buffering
+ENV PYTHONUNBUFFERED=1
+# Set MODELPATH environment variable
+ENV MODELPATH=/app/llm_model.bin
+
+ENV PATH=$PATH:/app
+
+# The working directory in the Docker image
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && \
+    apt-get install -y \
+    g++ \
+    make \
+    cmake \
+    unzip \
+    libcurl4-openssl-dev \
+    python3 \
+    python3-pip \
+    python3-dev \
+    git \
+    libclblast-dev \
+    libopenblas-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create a models directory
+RUN mkdir -p /models
+
+# Copy requirements.txt and install Python dependencies
+COPY requirements.txt ./requirements.txt
+#main application file
+COPY main.py .
+#sagemaker endpoints expects serve file to run the application
+COPY serve .
+
+RUN chmod u+x serve
+RUN pip3 install --no-cache-dir -r requirements.txt
+RUN export PATH=/app:$PATH
+
+# Expose port for the FastAPI application to run on, has to be 8080
+EXPOSE 8080
