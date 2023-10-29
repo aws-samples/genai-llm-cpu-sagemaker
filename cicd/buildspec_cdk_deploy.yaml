@@ -1,0 +1,22 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.9
+    commands:
+      - pwd
+      - ls -l
+      - sh cicd/cdk-init-script.sh
+
+  build:
+    commands:
+      - echo $PROJECT_NAME
+      - echo ==--------ListStacks---------==
+      - cdk list
+      - echo ==--------StartDeploy---------==
+      - cdk deploy "$PROJECT_NAME"-ModelServingStack --require-approval never
+      - echo ==--------CompleteDeploy---------==
+
+artifacts:
+  files: '**/*'
