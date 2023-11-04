@@ -17,23 +17,6 @@ class ImageBuildingStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, env, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        #ROOT_DIR = os.path.abspath(os.curdir)
-
-        # asset = aws_ecr_assets.DockerImageAsset(self, "llm-cpu-arm64-full-v00",
-        #     directory=os.path.join(ROOT_DIR, "docker"),
-        #     platform=aws_ecr_assets.Platform.LINUX_ARM64
-        #     #cache_from=[aws_ecr_asset.DockerCacheOption(type="registry", params={"ref": "ghcr.io/myorg/myimage:cache"})],
-        #     #cache_to=aws_ecr_assets.DockerCacheOption(type="registry", params={"ref": "ghcr.io/myorg/myimage:cache", "mode": "max", "compression": "zstd"})
-        # )
-
-        #repository = aws_ecr.Repository(self, "llm-cpu-repository")
-
-        # # Copy from cdk docker image asset to another ECR.
-        # ecrdeploy.ECRDeployment(self, "DeployDockerImage1",
-        #     src=ecrdeploy.DockerImageName(asset.image_uri),
-        #     dest=ecrdeploy.DockerImageName(f"{cdk.Aws.ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/my-nginx:latest")
-        # )
-
         PROJECT_NAME = "llm-cpu"
         REPOSITORY_NAME = "llm-cpu-repository"
         IMAGE_BUCKET_NAME = "llm-cpu-bucket"
@@ -58,12 +41,12 @@ class ImageBuildingStack(Stack):
             destination_bucket=bucket
         )
 
-        # ssm parameter to get bucket name later
-        bucket_param = aws_ssm.StringParameter(
-            self, "ParameterB",
-            parameter_name=f"{IMAGE_BUCKET_NAME}",
-            string_value=bucket.bucket_name,
-            description='cdk pipeline bucket')
+        # # ssm parameter to get bucket name later
+        # bucket_param = aws_ssm.StringParameter(
+        #     self, "ParameterB",
+        #     parameter_name=f"{IMAGE_BUCKET_NAME}",
+        #     string_value=bucket.bucket_name,
+        #     description='cdk pipeline bucket')
 
         # ecr repo to push docker container into
         ecr = aws_ecr.Repository(
@@ -73,7 +56,6 @@ class ImageBuildingStack(Stack):
         )
 
         standard_image = aws_codebuild.LinuxBuildImage.STANDARD_6_0
-        # standard_image = aws_codebuild.LinuxArmBuildImage.STANDARD_3_0
 
         # codebuild project meant to run in pipeline
         codebuild_docker_project = aws_codebuild.PipelineProject(
@@ -95,7 +77,7 @@ class ImageBuildingStack(Stack):
                 "TAG": aws_codebuild.BuildEnvironmentVariable(
                     value='cdk')
             },
-            description='Pipeline for CodeBuild',
+            description='Pipeline to build and push images to ECR',
             timeout=Duration.minutes(60),
         )
         # codebuild iam permissions to read write s3
@@ -120,12 +102,6 @@ class ImageBuildingStack(Stack):
                             output=source_output,
                             trigger=aws_codepipeline_actions.S3Trigger.POLL
                         ),
-                        # aws_codepipeline_actions.EcrSourceAction(
-                        #     action_name="ECR",
-                        #     repository=ecr,
-                        #     image_tag="latest",  # optional, default: 'latest'
-                        #     output=source_output
-                        # ),
                     ]
                 ),
                 aws_codepipeline.StageProps(
@@ -140,20 +116,4 @@ class ImageBuildingStack(Stack):
                     ]
                 )
             ]
-
         )
-
-        # source_artifact = codepipeline.Artifact(os.path.join(ROOT_DIR, "docker/"))
-
-        # pipeline = pipelines.CodePipeline(self, "Pipeline",
-        #     code_pipeline=code_pipeline,
-        #     synth=pipelines.ShellStep("Synth",
-        #         input=pipelines.CodePipelineFileSet.from_artifact(source_artifact),
-        #         commands=["./image.sh"]
-        #     )
-        # )
-
-
-                
-
-
