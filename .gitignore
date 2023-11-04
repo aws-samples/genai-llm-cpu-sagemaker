@@ -10,3 +10,4 @@ __pycache__
 cdk.out
 .DS_Store
 .local.*
+*.zip
