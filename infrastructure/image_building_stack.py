@@ -20,11 +20,18 @@ class ImageBuildingStack(Stack):
         PROJECT_NAME = "llm-cpu"
         REPOSITORY_NAME = "llm-cpu-repository"
         IMAGE_BUCKET_NAME = "llm-cpu-bucket"
+        MODEL_BUCKET_NAME = "sagemaker-llama-model-bucket"
 
         ROOT_DIR = os.path.abspath(os.curdir)
 
         # define the s3 artifact
         source_output = aws_codepipeline.Artifact(artifact_name='source')
+
+        # create bucket
+        bucket_model = aws_s3.Bucket(self, f"{MODEL_BUCKET_NAME}",
+            versioned=False,
+            removal_policy=RemovalPolicy.RETAIN
+        )
 
         # pipeline requires versioned bucket
         bucket = aws_s3.Bucket(
@@ -72,6 +79,7 @@ class ImageBuildingStack(Stack):
                 "CDK_DEPLOY_ACCOUNT": aws_codebuild.BuildEnvironmentVariable(value=os.getenv('CDK_DEPLOY_ACCOUNT') or ""),
                 "CDK_DEPLOY_REGION": aws_codebuild.BuildEnvironmentVariable(value=os.getenv('CDK_DEPLOY_REGION') or ""),
                 "REPOSITORY_NAME": aws_codebuild.BuildEnvironmentVariable(value=f"{REPOSITORY_NAME}"),
+                "MODEL_BUCKET_NAME": aws_codebuild.BuildEnvironmentVariable(value=f"{bucket_model.bucket_name}"),
                 "ECR": aws_codebuild.BuildEnvironmentVariable(
                     value=ecr.repository_uri),
                 "TAG": aws_codebuild.BuildEnvironmentVariable(
@@ -82,6 +90,7 @@ class ImageBuildingStack(Stack):
         )
         # codebuild iam permissions to read write s3
         bucket.grant_read_write(codebuild_docker_project)
+        bucket_model.grant_read_write(codebuild_docker_project)
 
         # codebuild permissions to interact with ecr
         ecr.grant_pull_push(codebuild_docker_project)

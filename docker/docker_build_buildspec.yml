@@ -13,11 +13,18 @@ phases:
       - docker run --privileged --rm public.ecr.aws/eks-distro-build-tooling/binfmt-misc:qemu-v7.0.0  --install arm64
       - export DOCKER_BUILDKIT=1
       - export DOCKER_CLI_EXPERIMENTAL=enabled
-      - ARC="$(uname -m)"
-      - echo ${ARC}
   build:
     commands:
       - echo Entered the build phase...
       - bash ./image-build.sh $CDK_DEPLOY_ACCOUNT $CDK_DEPLOY_REGION $REPOSITORY_NAME
       - echo Entered the post_build phase...
       - bash ./image-push.sh $CDK_DEPLOY_ACCOUNT $CDK_DEPLOY_REGION $REPOSITORY_NAME
+  post_build:
+    on-failure: CONTINUE
+    commands:
+      - echo Entered the post-build phase...
+      - sudo apt-get update
+      - sudo apt-get install -y python3-pip
+      - pip3 install huggingface-hub>=0.17.1 hf_transfer
+      - HUGGINGFACE_HUB_ENABLE_HF_TRANSFER=1 huggingface-cli download TheBloke/Llama-2-7b-Chat-GGUF llama-2-7b-chat.Q4_K_M.gguf --local-dir . --local-dir-use-symlinks False
+      - aws s3 cp llama-2-7b-chat.Q4_K_M.gguf s3://${MODEL_BUCKET_NAME}/
