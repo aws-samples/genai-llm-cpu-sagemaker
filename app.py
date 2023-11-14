@@ -13,11 +13,13 @@ environment=cdk.Environment(
 
 model_info = {
     "role_name": "SageMakerExecutionRole",
-    "model_bucket_name": "sagemaker-llama-model-bucket"
+    "model_bucket_name": "sagemaker-llama-model-bucket",
 }
 
 app = cdk.App()
+
+
+ImageBuildingStack(app, "ImageBuildingStack", env=environment)
 ModelServingStack(app, "ModelServingStack", env=environment, model_info=model_info)
-#ImageBuildingStack(app, "ImageBuildingStack", env=environment)
 
 app.synth()
