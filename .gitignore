@@ -11,3 +11,5 @@ cdk.out
 .DS_Store
 .local.*
 *.zip
+*.tar.gz
+*.gguf
