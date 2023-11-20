@@ -3,6 +3,7 @@ from aws_cdk import (
     RemovalPolicy,
     CfnOutput,
     aws_iam,
+    aws_ssm,
     aws_s3,
     aws_s3_deployment,
     aws_s3_assets,
@@ -17,12 +18,9 @@ from aws_cdk import (
     CfnOutput, Duration, RemovalPolicy, Stack,
 )
 
-
 from constructs import Construct
 
 import os
-import shutil
-import yaml
 
 class ModelDownloadStack(Stack):
 
@@ -96,6 +94,11 @@ class ModelDownloadStack(Stack):
             )
             ]
         )
+
+        aws_ssm.StringParameter(self, "model_bucket_name_parameter", 
+            parameter_name="model_bucket_name_parameter", 
+            string_value=bucket.bucket_name
+            )
 
         CfnOutput(scope=self,
             id="model_bucket_name", 

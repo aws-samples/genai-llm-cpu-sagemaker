@@ -133,8 +133,17 @@ class ModelServingStack(Stack):
         endpoint.node.add_dependency(sts_policy)
         endpoint.node.add_dependency(logs_policy)
         endpoint.node.add_dependency(ecr_policy)
+
+        CfnOutput(scope=self,
+            id="sagemaker_endpoint_name", 
+            value=endpoint.endpoint_name, 
+            export_name="var-sagemakerendpointname"
+            )
         
-        aws_ssm.StringParameter(self, "sm_endpoint", parameter_name="sm_endpoint", string_value=endpoint.endpoint_name)
+        aws_ssm.StringParameter(self, "sagemaker_endpoint_name_parameter", 
+            parameter_name="sagemaker_endpoint_name_parameter", 
+            string_value=endpoint.endpoint_name
+            )
 
 
        
