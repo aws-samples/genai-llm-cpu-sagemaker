@@ -11,12 +11,6 @@ from aws_cdk import (
 
 import logging
 
-# import urllib.request
-# import boto3
-# import botocore
-# import requests
-# import mimetypes
-
 from constructs import Construct
 
 from construct.sagemaker_endpoint_construct import SageMakerEndpointConstruct
@@ -28,22 +22,26 @@ from sagemaker import model_uris
 
 class ModelServingStack(Stack):
 
-    def __init__(self, scope: Construct, construct_id: str, env, model_info, **kwargs) -> None:
+    def __init__(self, scope: Construct, construct_id: str, env, sagemaker_role_name: str, instance_type: str, model_repository_image: str, model_bucket_name: str, model_bucket_key: str, sagemaker_model_name: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        #TODO Configuration via CDK + api call for Endpoint
+        #TODO Configuration via CDK + api call for Endpoint 
 
-        ROLE_NAME = model_info["role_name"] #"SageMakerExecutionRole"
+        ROLE_NAME = sagemaker_role_name #"SageMakerExecutionRole"
         #MODEL_BUCKET_NAME = model_info["model_bucket_name"] #"sagemaker-llama-model-bucket"
         REGION_NAME = str(env.region)
 
-        INSTANCE_TYPE = "ml.c7g.2xlarge" # make sure you use correct instance types x86 or graviton 
+        MODEL_BUCKET_NAME = model_bucket_name
+        MODEL_BUCKET_KEY = model_bucket_key
+        MODEL_REPOSITORY_IMAGE = model_repository_image
 
-        model_docker_image = "859155805248.dkr.ecr.us-east-1.amazonaws.com/llm-cpu-repository:latest" # inference_image_uri
-        model_bucket_name = "imagebuildingstack-sagemakerllamamodelbucket4b31a-kyl4wi1ntha8"
-        model_bucket_key = "llama-2-7b-chat.tar.gz"
+        INSTANCE_TYPE = instance_type # make sure you use correct instance types x86 or graviton 
 
-        MODEL_NAME = 'llamacpp-arm64-c7-x8-v00'
+        # image_repository_name = "859155805248.dkr.ecr.us-east-1.amazonaws.com/llm-cpu-repository:latest" # inference_image_uri
+        # model_bucket_name = "imagebuildingstack-sagemakerllamamodelbucket4b31a-kyl4wi1ntha8"
+        # model_bucket_key = "llama-2-7b-chat.tar.gz"
+
+        MODEL_NAME = sagemaker_model_name
         ENDPOINT_CONFIG_NAME = f'{MODEL_NAME}-config'
         ENDPOINT_NAME = f'{MODEL_NAME}-stream'
 
@@ -92,7 +90,7 @@ class ModelServingStack(Stack):
                                         actions=[
                                             "s3:*",
                                           ],
-                                        resources=["*"] #[f"arn:aws:s3:::{MODEL_BUCKET_NAME}/*"]
+                                        resources=["*"] #TODO[f"arn:aws:s3:::{MODEL_BUCKET_NAME}/*"]
                                     )]
                                 )
 
@@ -112,9 +110,9 @@ class ModelServingStack(Stack):
                                     role_arn= sagemaker_role.role_arn,
 
                                     model_name = f"{MODEL_NAME}",
-                                    model_bucket_name = model_bucket_name,
-                                    model_bucket_key = model_bucket_key,
-                                    model_docker_image = model_docker_image,
+                                    model_bucket_name = f"{MODEL_BUCKET_NAME}",
+                                    model_bucket_key = f"{MODEL_BUCKET_KEY}",
+                                    model_repository_image = f"{MODEL_REPOSITORY_IMAGE}:latest",
 
                                     variant_name = "AllTraffic",
                                     variant_weight = 1,
