@@ -13,7 +13,7 @@ class SageMakerEndpointConstruct(Construct):
         model_name: str,
         model_bucket_name,
         model_bucket_key: str,
-        model_docker_image: str,
+        model_repository_image: str,
         variant_name: str,
         variant_weight: int,
         instance_count: int,
@@ -26,7 +26,7 @@ class SageMakerEndpointConstruct(Construct):
                            execution_role_arn= role_arn,
                            containers=[
                                sagemaker.CfnModel.ContainerDefinitionProperty(
-                                        image= model_docker_image,
+                                        image = model_repository_image,
                                         model_data_url= f"s3://{model_bucket_name}/{model_bucket_key}",
                                         environment= environment
                                     )
