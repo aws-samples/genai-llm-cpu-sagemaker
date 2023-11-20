@@ -7,7 +7,7 @@ import time
 from infrastructure.model_serving_stack import ModelServingStack
 from infrastructure.image_building_stack import ImageBuildingStack
 from infrastructure.model_download_stack import ModelDownloadStack
-
+from infrastructure.model_configuration_stack import ModelConfigurationStack
 
 environment=cdk.Environment(
     account=os.environ["CDK_DEFAULT_ACCOUNT"],
@@ -21,6 +21,7 @@ config = {
     "sagemaker_role_name": "sagemaker-execution-role",
     "instance_type": "ml.c7g.2xlarge",
     "model_bucket_key": "llama-2-7b-chat.tar.gz",
+    "model_bucket_key_file": "llama-2-7b-chat.Q4_K_M.gguf", #TODO tidy up
     "sagemaker_model_name": "llamacpp-arm64-c7-x8-v00" #TODO obsolete
 }
 
@@ -56,5 +57,15 @@ modelServingStack = ModelServingStack(app,
     )
 
 #TODO wait until SageMaker model is InService before configuring it
+#TODO replace with post-script exec or custome resource (Lambda)
+
+# modelConfigurationStack = ModelConfigurationStack(app, 
+#     "ModelConfigurationStack",
+#     env=environment,
+#     model_bucket_key_file=config["model_bucket_key_file"]
+#     )
+
+# modelConfigurationStack.add_dependency(modelDownloadStack)
+# modelConfigurationStack.add_dependency(modelServingStack)
 
 app.synth()
