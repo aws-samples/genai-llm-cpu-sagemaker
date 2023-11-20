@@ -5,6 +5,7 @@ from aws_cdk import (
     aws_iam,
     aws_s3,
     aws_s3_deployment,
+    aws_s3_assets,
     aws_codebuild,
     aws_codepipeline,
     aws_codepipeline_actions,
@@ -16,6 +17,7 @@ from aws_cdk import (
     CfnOutput, Duration, RemovalPolicy, Stack,
 )
 
+
 from constructs import Construct
 
 import os
@@ -24,26 +26,22 @@ import yaml
 
 class ModelDownloadStack(Stack):
 
-    def __init__(self, scope: Construct, construct_id: str, env, **kwargs) -> None:
+    def __init__(self, scope: Construct, construct_id: str, env, model_bucket_prefix:str, project_name: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         ROOT_DIR = os.path.abspath(os.curdir)
+        MODEL_BUCKET_NAME = model_bucket_prefix
+        PROJECT_NAME = project_name
 
-        MODEL_BUCKET_NAME = "model-bucket"
-        PROJECT_NAME = "llm-cpu"
-
+        # create bucket for model
         bucket = aws_s3.Bucket(self, f"{MODEL_BUCKET_NAME}",
             versioned=True,
             removal_policy=RemovalPolicy.DESTROY,
             auto_delete_objects=True
         )
 
-        shutil.make_archive("model", "zip", os.path.join(ROOT_DIR, "model"))
-        shutil.copy(os.path.join(ROOT_DIR, "model.zip"), os.path.join(ROOT_DIR, "model", "model.zip"))
-
-        s3_bucket_deployment = aws_s3_deployment.BucketDeployment(self, "ModelFiles",
-            sources=[aws_s3_deployment.Source.asset(os.path.join(ROOT_DIR, "model"))],
-            destination_bucket=bucket
+        asset_bucket = aws_s3_assets.Asset(self, "ModelAssets",
+            path = os.path.join(ROOT_DIR, "model"),
         )
 
         standard_image = aws_codebuild.LinuxBuildImage.STANDARD_6_0
@@ -67,12 +65,13 @@ class ModelDownloadStack(Stack):
         )
         
         bucket.grant_read_write(codebuild_project)
+        asset_bucket.grant_read(codebuild_project)
 
         source_output = aws_codepipeline.Artifact(artifact_name='source')
 
         source_action = aws_codepipeline_actions.S3SourceAction(
-                        bucket=bucket,
-                        bucket_key='model.zip',
+                        bucket=asset_bucket.bucket,
+                        bucket_key=asset_bucket.s3_object_key,
                         action_name='ModelBuildSource',
                         run_order=1,
                         output=source_output,                    
@@ -87,7 +86,7 @@ class ModelDownloadStack(Stack):
 
         aws_codepipeline.Pipeline(self, "Pipeline",
             pipeline_name=f"{PROJECT_NAME}-model-download-pipeline",
-            artifact_bucket=bucket,
+            artifact_bucket=asset_bucket.bucket,
             stages=[aws_codepipeline.StageProps(
                 stage_name="Source",
                 actions=[source_action]
@@ -97,3 +96,9 @@ class ModelDownloadStack(Stack):
             )
             ]
         )
+
+        CfnOutput(scope=self,
+            id="model_bucket_name", 
+            value=bucket.bucket_name, 
+            export_name="var-modelbucketname"
+            )
