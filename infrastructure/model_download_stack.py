@@ -95,11 +95,6 @@ class ModelDownloadStack(Stack):
             ]
         )
 
-        aws_ssm.StringParameter(self, "model_bucket_name_parameter", 
-            parameter_name="model_bucket_name_parameter", 
-            string_value=bucket.bucket_name
-            )
-
         CfnOutput(scope=self,
             id="model_bucket_name", 
             value=bucket.bucket_name, 

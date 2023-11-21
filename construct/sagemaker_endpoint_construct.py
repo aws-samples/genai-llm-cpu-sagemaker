@@ -54,7 +54,7 @@ class SageMakerEndpointConstruct(Construct):
                                 endpoint_config_name= config.attr_endpoint_config_name
             )
             
-            CfnOutput(scope=self,id=f"{model_name}EndpointName", value=self.endpoint.endpoint_name)
+            #CfnOutput(scope=self,id=f"{model_name}EndpointName", value=self.endpoint.endpoint_name)
             
             
     @property

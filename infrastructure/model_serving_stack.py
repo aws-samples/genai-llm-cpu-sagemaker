@@ -25,10 +25,7 @@ class ModelServingStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, env, sagemaker_role_name: str, instance_type: str, model_repository_image: str, model_bucket_name: str, model_bucket_key: str, sagemaker_model_name: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        #TODO Configuration via CDK + api call for Endpoint 
-
-        ROLE_NAME = sagemaker_role_name #"SageMakerExecutionRole"
-        #MODEL_BUCKET_NAME = model_info["model_bucket_name"] #"sagemaker-llama-model-bucket"
+        ROLE_NAME = sagemaker_role_name
         REGION_NAME = str(env.region)
 
         MODEL_BUCKET_NAME = model_bucket_name
@@ -36,10 +33,6 @@ class ModelServingStack(Stack):
         MODEL_REPOSITORY_IMAGE = model_repository_image
 
         INSTANCE_TYPE = instance_type # make sure you use correct instance types x86 or graviton 
-
-        # image_repository_name = "859155805248.dkr.ecr.us-east-1.amazonaws.com/llm-cpu-repository:latest" # inference_image_uri
-        # model_bucket_name = "imagebuildingstack-sagemakerllamamodelbucket4b31a-kyl4wi1ntha8"
-        # model_bucket_key = "llama-2-7b-chat.tar.gz"
 
         MODEL_NAME = sagemaker_model_name
         ENDPOINT_CONFIG_NAME = f'{MODEL_NAME}-config'
@@ -138,11 +131,6 @@ class ModelServingStack(Stack):
             id="sagemaker_endpoint_name", 
             value=endpoint.endpoint_name, 
             export_name="var-sagemakerendpointname"
-            )
-        
-        aws_ssm.StringParameter(self, "sagemaker_endpoint_name_parameter", 
-            parameter_name="sagemaker_endpoint_name_parameter", 
-            string_value=endpoint.endpoint_name
             )
 
 
