@@ -1,9 +1,11 @@
 from aws_cdk import (
     Stack,
-    CfnOutput,
+    CfnOutput, 
+    Duration,
     aws_ssm,
+    aws_stepfunctions,
+    aws_iam
 )
-
 from constructs import Construct
 
 import boto3
@@ -11,25 +13,15 @@ import json
 
 class ModelConfigurationStack(Stack):
 
-    def configure_sagemaker_endpoint(self, endpoint_name, llama_model_args):
-
-        sagemaker_runtime = boto3.client('sagemaker-runtime')
-
-        payload = {
-            'configure': True,
-            'inference': False,
-            'args': llama_model_args
-        }
-        response = sagemaker_runtime.invoke_endpoint(
-            EndpointName=endpoint_name,
-            Body=json.dumps(payload),
-            ContentType='application/json',
-        )
-        response_body = json.loads(response['Body'].read().decode())
-        return response_body
-
-    def __init__(self, scope: Construct, construct_id: str, model_bucket_key_file: str, env, **kwargs) -> None:
+    def __init__(self, scope: Construct, construct_id: str, model_bucket_key_file: str, model_bucket_name: str, sagemaker_endpoint_name:str, env, **kwargs) -> None:
         super().__init__(scope, construct_id, env=env, **kwargs)
+
+        MODEL_BUCKET_KEY_FILE = model_bucket_key_file
+        ENDPOINT_NAME = sagemaker_endpoint_name
+        MODEL_BUCKET_NAME = model_bucket_name
+
+        REGION_NAME = str(env.region)
+        ACCOUNT = str(env.account)
 
         """
         Wait until your model is InService.
@@ -40,20 +32,10 @@ class ModelConfigurationStack(Stack):
         Execute this cell each time you want to load a new model into the endpoint without having to redeploy anything. 
         Loading model from S3 usualy takes 20-30 seconds but depends on loading speed from S3.
         """
-
-        sagemaker_endpoint_name = aws_ssm.StringParameter.value_from_lookup(
-            self, "sagemaker_endpoint_name_parameter")
-
-        model_bucket_name = aws_ssm.StringParameter.value_from_lookup(
-            self, "model_bucket_name_parameter")
-
-        print("sagemaker_endpoint_name:", sagemaker_endpoint_name)
-        print("model_bucket_name:", model_bucket_name)
         
-
         llama_model_args = {
-            "bucket":f"{model_bucket_name}",
-            "key":f"{model_bucket_key_file}", 
+            "bucket":f"{MODEL_BUCKET_NAME}",
+            "key":f"{MODEL_BUCKET_KEY_FILE}", 
             "n_ctx": 1024,
             "n_parts": -1,
             "n_gpu_layers": 0,
@@ -76,9 +58,46 @@ class ModelConfigurationStack(Stack):
             "verbose": False,
         }
 
-        response = self.configure_sagemaker_endpoint(sagemaker_endpoint_name, llama_model_args)
-        print("Sagemaker endpoint configuration status: ", response)
+        payload = {
+            'configure': True,
+            'inference': False,
+            'args': llama_model_args
+        }
 
+        payload_json = json.dumps(payload)
+
+        state_json = {
+            "Type": "Task",
+            "End": True,
+            "Parameters": {
+                "Body.$": aws_stepfunctions.JsonPath.string_to_json(str(payload_json)),
+                "EndpointName": ENDPOINT_NAME
+            },
+            "Resource": "arn:aws:states:::aws-sdk:sagemakerruntime:invokeEndpoint",
+        }
+
+        # custom state which represents a task
+        custom_state = aws_stepfunctions.CustomState(self, "invoke sagemaker configure endpoint",
+            state_json=state_json
+        )
+
+        chain = aws_stepfunctions.Chain.start(custom_state) #.next(final_status)
+
+        state_machine = aws_stepfunctions.StateMachine(self, "SagemakerEndpointStateMachine",
+            definition=chain,
+            timeout=Duration.seconds(30),
+        )
+
+        state_machine.add_to_role_policy(statement=aws_iam.PolicyStatement(
+                actions=["sagemaker:InvokeEndpoint"],
+                resources=["*"] #TODO arn:aws:sagemaker:{REGION_NAME}:{ACCOUNT}:endpoint/{ENDPOINT_NAME} includes Token[]
+            )
+        )
+
+        CfnOutput(scope=self,
+            id="sagemaker_invoke_endpoint_state_machine", 
+            value=state_machine.state_machine_name, 
+            )
        
 
 
