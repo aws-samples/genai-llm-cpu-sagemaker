@@ -43,7 +43,6 @@ imageBuildingStack = ImageBuildingStack(app,
     model_bucket_name=cdk.Fn.import_value("var-modelbucketname"),
     )
 
-#time.sleep(15*60) #TODO wait for image to be built instead of time delay / resource creation
 
 modelServingStack = ModelServingStack(app, 
     "ModelServingStack", 
@@ -53,19 +52,23 @@ modelServingStack = ModelServingStack(app,
     model_repository_image=cdk.Fn.import_value("var-modelrepositoryuri"), 
     model_bucket_name=cdk.Fn.import_value("var-modelbucketname"), 
     model_bucket_key=config["model_bucket_key"], 
-    sagemaker_model_name=config["sagemaker_model_name"]
+    sagemaker_model_name=config["sagemaker_model_name"],
     )
 
+#TODO wait for image to be built instead of time delay / resource creation
+# cfn_wait_condition = aws_cloudformation.CfnWaitCondition(modelServingStack, id="WaitCondition",
+#     count=15*60,
+# )
+
 #TODO wait until SageMaker model is InService before configuring it
-#TODO replace with post-script exec or custome resource (Lambda)
+#TODO replace with post-script exec or custome resource (Lambda) or CustomState! https://github.com/aws/aws-cdk/issues/21610
 
-# modelConfigurationStack = ModelConfigurationStack(app, 
-#     "ModelConfigurationStack",
-#     env=environment,
-#     model_bucket_key_file=config["model_bucket_key_file"]
-#     )
-
-# modelConfigurationStack.add_dependency(modelDownloadStack)
-# modelConfigurationStack.add_dependency(modelServingStack)
+modelConfigurationStack = ModelConfigurationStack(app, 
+    "ModelConfigurationStack",
+    env=environment,
+    model_bucket_key_file=config["model_bucket_key_file"],
+    model_bucket_name=cdk.Fn.import_value("var-modelbucketname"),
+    sagemaker_endpoint_name=cdk.Fn.import_value("var-sagemakerendpointname"),
+    )
 
 app.synth()
