@@ -67,22 +67,25 @@ command.
 
 ### Deploy all stacks
 
-`./cicd/cdk-deploy-to.sh <account-id> <region-name> --all` 
+`./cicd/cdk-deploy-all-to.sh <account-id> <region-name>` 
 
 For example:
-`./cicd/cdk-deploy-to.sh 012345678901 us-east-1 --all` 
+`./cicd/cdk-deploy-all-to.sh 012345678901 us-east-1` 
 
 To auto-approve:
-`./cicd/cdk-deploy-to.sh <account-id> <region-name> --all --require-approval never`
+`./cicd/cdk-deploy-all-to.sh <account-id> <region-name> --require-approval never`
 
 Or you can only deploy one stack:
-`./cicd/cdk-destroy-from.sh <account-id> <region-name> ModelDownloadStack` 
+`./cicd/cdk-deploy-stack-to.sh <account-id> <region-name> ModelDownloadStack` 
 
 
 ## Project clean-up
 
-Use destroy script to remove stacks and and approve destroying stacks
-`./cicd/cdk-destroy-from.sh <account-id> <region-name> --all` 
+Use destroy script to remove stacks and approve destroying stacks:
+`./cicd/cdk-undeploy-from.sh <account-id> <region-name> --all` 
+
+Or use destroy script to remove single stack and approve destroying a stack:
+`./cicd/cdk-undeploy-from.sh <account-id> <region-name> ModelServingStack` 
 
 ### Credits
 
