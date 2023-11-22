@@ -7,20 +7,18 @@ from aws_cdk import (
     aws_s3,
     aws_sagemaker as sagemaker,
     aws_s3_deployment
-)
+    )
 
-import logging
-
-from constructs import Construct
-
-from construct.sagemaker_endpoint_construct import SageMakerEndpointConstruct
+from sagemaker import (
+    script_uris, 
+    image_uris, 
+    model_uris
+    )
 
 import sagemaker
-from sagemaker import script_uris
-from sagemaker import image_uris 
-from sagemaker import model_uris
 
-from aws_cdk import (aws_cloudformation, RemovalPolicy, CfnResource)
+from constructs import Construct
+from construct.sagemaker_endpoint_construct import SageMakerEndpointConstruct
 
 class ModelServingStack(Stack):
 
@@ -88,11 +86,6 @@ class ModelServingStack(Stack):
                                         resources=["*"] #TODO[f"arn:aws:s3:::{MODEL_BUCKET_NAME}/*"]
                                     )]
                                 )
-
-        # sagemaker_role.add_to_policy(aws_iam.PolicyStatement(
-        #     actions=["s3:*"],
-        #     resources=[f"arn:aws:s3:::{MODEL_BUCKET_NAME}/*"]
-        # ))
                                 
         sagemaker_role.attach_inline_policy(sts_policy)
         sagemaker_role.attach_inline_policy(logs_policy)
@@ -128,20 +121,6 @@ class ModelServingStack(Stack):
         endpoint.node.add_dependency(sts_policy)
         endpoint.node.add_dependency(logs_policy)
         endpoint.node.add_dependency(ecr_policy)
-
-        cfn_handle = aws_cloudformation.CfnWaitConditionHandle(
-            self,
-            "ModelInServiceWaitConditionHandle")
-
-        cfn_wait_condition = aws_cloudformation.CfnWaitCondition(
-            self, 
-            "ModelInServiceWaitCondition",
-            timeout="180",
-            count=1,
-            handle=cfn_handle.ref
-        )
-        
-        cfn_wait_condition.apply_removal_policy(RemovalPolicy.DESTROY)
 
         CfnOutput(scope=self,
             id="sagemaker_endpoint_name", 

@@ -7,14 +7,10 @@ from aws_cdk import (
     aws_codebuild,
     aws_codepipeline,
     aws_codepipeline_actions,
-    App, Aws, CfnOutput, Duration, RemovalPolicy, Stack
+    App, Aws, CfnOutput, Duration, RemovalPolicy, Stack, CustomResource
 )
 import os
 from constructs import Construct
-import time
-
-from aws_cdk import (aws_cloudformation, RemovalPolicy, CfnResource)
-
 
 class ImageBuildingStack(Stack):
 
@@ -61,7 +57,7 @@ class ImageBuildingStack(Stack):
                 "TAG": aws_codebuild.BuildEnvironmentVariable(
                     value='cdk')
             },
-            description='Pipeline to build and push images to ECR',
+            description='Pipeline to build and push images to container registry',
             timeout=Duration.minutes(60),
         )
 
@@ -101,28 +97,6 @@ class ImageBuildingStack(Stack):
                 )
             ]
         )
-
-        cfn_handle = aws_cloudformation.CfnWaitConditionHandle(
-            self,
-            "ImagePushWaitConditionHandle")
-
-        cfn_wait_condition = aws_cloudformation.CfnWaitCondition(
-            self, 
-            "ImagePushWaitCondition",
-            timeout="900",
-            count=1,
-            handle=cfn_handle.ref
-        )
-
-        image_resource = CfnResource(self, "Resource",
-                    type="AWS::ECR::Repository",
-                    properties={
-                        "RepositoryName": ecr.repository_uri
-                    }
-                )
-
-        cfn_wait_condition.add_depends_on(image_resource)
-        cfn_wait_condition.apply_removal_policy(RemovalPolicy.DESTROY)
 
         CfnOutput(scope=self,
             id="image_repository_uri", 

@@ -11,49 +11,61 @@ from infrastructure.image_building_stack import ImageBuildingStack
 from infrastructure.model_download_stack import ModelDownloadStack
 from infrastructure.model_configuration_stack import ModelConfigurationStack
 
+from configparser import ConfigParser
+
 environment=cdk.Environment(
     account=os.environ["CDK_DEFAULT_ACCOUNT"],
-    region=os.environ["CDK_DEFAULT_REGION"])
+    region=os.environ["CDK_DEFAULT_REGION"]
+)
 
-config = {
-    "model_bucket_prefix": "model-bucket",
-    "project_name": "llm-cpu",
-    "repository_name": "model-image-repository",
-    "image_bucket_name": "image-bucket",
-    "sagemaker_role_name": "sagemaker-execution-role",
-    "instance_type": "ml.c7g.2xlarge",
-    "model_bucket_key": "llama-2-7b-chat.tar.gz",
-    "model_bucket_key_file": "llama-2-7b-chat.Q4_K_M.gguf", #TODO tidy up
-    "sagemaker_model_name": "llamacpp-arm64-c7-x8-v00" #TODO obsolete
-}
+config = ConfigParser()
+config.read("app-config.ini")
+
+project_name               = config.get('project', 'project_name').replace('"', '')
+
+model_bucket_prefix        = config.get("model", "model_bucket_prefix").replace('"', '')
+model_hugging_face_name    = config.get("model", "model_hugging_face_name").replace('"', '')
+model_bucket_key_full_name = config.get("model", "model_full_name").replace('"', '')
+
+image_bucket_prefix        = config.get("image", "image_bucket_prefix").replace('"', '')
+image_repository_name      = config.get("image", "image_repository_name").replace('"', '')
+
+sagemaker_role_name        = config.get("inference", "sagemaker_role_name").replace('"', '')
+instance_type              = config.get("inference", "instance_type").replace('"', '')
+
+model_bucket_key_compressed     = model_bucket_key_full_name.split(".")[0] + ".tar.gz"
+sagemaker_model_name            = model_bucket_key_full_name.split(".")[0]
 
 app = cdk.App()
 
 modelDownloadStack = ModelDownloadStack(app, 
     "ModelDownloadStack", 
     env=environment, 
-    model_bucket_prefix=config["model_bucket_prefix"],
-    project_name=config["project_name"],
+    project_name=project_name,
+    model_bucket_prefix=model_bucket_prefix,
+    model_bucket_key_compressed=model_bucket_key_compressed,
+    model_bucket_key_full_name=model_bucket_key_full_name,
+    model_hugging_face_name=model_hugging_face_name
     )
 
 imageBuildingStack = ImageBuildingStack(app, 
     "ImageBuildingStack", 
     env=environment,
-    project_name=config["project_name"], 
-    repository_name=config["repository_name"], 
-    image_bucket_name=config["image_bucket_name"], 
+    project_name=project_name, 
+    repository_name=image_repository_name, 
+    image_bucket_name=image_bucket_prefix, 
     model_bucket_name=cdk.Fn.import_value("var-modelbucketname"),
     )
 
 modelServingStack = ModelServingStack(app, 
     "ModelServingStack", 
     env=environment, 
-    sagemaker_role_name=config["sagemaker_role_name"],
-    instance_type=config["instance_type"], 
+    sagemaker_role_name=sagemaker_role_name,
+    instance_type=instance_type, 
     model_repository_uri=cdk.Fn.import_value("var-modelrepositoryuri"), 
     model_bucket_name=cdk.Fn.import_value("var-modelbucketname"), 
-    model_bucket_key=config["model_bucket_key"], 
-    sagemaker_model_name=config["sagemaker_model_name"],
+    model_bucket_key=model_bucket_key_compressed, 
+    sagemaker_model_name=sagemaker_model_name,
     )
 
 modelServingStack.add_dependency(imageBuildingStack)
@@ -62,7 +74,7 @@ modelServingStack.add_dependency(modelDownloadStack)
 modelConfigurationStack = ModelConfigurationStack(app, 
     "ModelConfigurationStack",
     env=environment,
-    model_bucket_key_file=config["model_bucket_key_file"],
+    model_bucket_key=model_bucket_key_full_name,
     model_bucket_name=cdk.Fn.import_value("var-modelbucketname"),
     sagemaker_endpoint_name=cdk.Fn.import_value("var-sagemakerendpointname"),
     )

@@ -13,10 +13,10 @@ import json
 
 class ModelConfigurationStack(Stack):
 
-    def __init__(self, scope: Construct, construct_id: str, model_bucket_key_file: str, model_bucket_name: str, sagemaker_endpoint_name:str, env, **kwargs) -> None:
+    def __init__(self, scope: Construct, construct_id: str, model_bucket_key: str, model_bucket_name: str, sagemaker_endpoint_name:str, env, **kwargs) -> None:
         super().__init__(scope, construct_id, env=env, **kwargs)
 
-        MODEL_BUCKET_KEY_FILE = model_bucket_key_file
+        MODEL_BUCKET_KEY_FILE = model_bucket_key
         ENDPOINT_NAME = sagemaker_endpoint_name
         MODEL_BUCKET_NAME = model_bucket_name
 

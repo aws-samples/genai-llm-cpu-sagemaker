@@ -24,12 +24,20 @@ import os
 
 class ModelDownloadStack(Stack):
 
-    def __init__(self, scope: Construct, construct_id: str, env, model_bucket_prefix:str, project_name: str, **kwargs) -> None:
+    def __init__(self, scope: Construct, construct_id: str, 
+            env, project_name: str, 
+            model_bucket_prefix:str, 
+            model_bucket_key_compressed: str,
+            model_bucket_key_full_name: str,
+            model_hugging_face_name: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         ROOT_DIR = os.path.abspath(os.curdir)
-        MODEL_BUCKET_NAME = model_bucket_prefix
         PROJECT_NAME = project_name
+        MODEL_BUCKET_NAME = model_bucket_prefix
+        MODEL_BUCKET_KEY_COMPRESSED = model_bucket_key_compressed
+        MODEL_BUCKET_KEY_FULL_NAME = model_bucket_key_full_name
+        MODEL_HUGGING_FACE_NAME = model_hugging_face_name
 
         # create bucket for model
         bucket = aws_s3.Bucket(self, f"{MODEL_BUCKET_NAME}",
@@ -44,7 +52,7 @@ class ModelDownloadStack(Stack):
 
         standard_image = aws_codebuild.LinuxBuildImage.STANDARD_6_0
 
-        codebuild_project = aws_codebuild.PipelineProject(self, "DownloadModelProject",
+        codebuild_project = aws_codebuild.PipelineProject(self, f"{PROJECT_NAME}",
             build_spec=aws_codebuild.BuildSpec.from_source_filename(
                 filename='model_build_buildspec.yml'),
             environment=aws_codebuild.BuildEnvironment(
@@ -55,6 +63,9 @@ class ModelDownloadStack(Stack):
                 "CDK_DEPLOY_ACCOUNT": aws_codebuild.BuildEnvironmentVariable(value=os.getenv('CDK_DEPLOY_ACCOUNT') or ""),
                 "CDK_DEPLOY_REGION": aws_codebuild.BuildEnvironmentVariable(value=os.getenv('CDK_DEPLOY_REGION') or ""),
                 "MODEL_BUCKET_NAME": aws_codebuild.BuildEnvironmentVariable(value=f"{bucket.bucket_name}"),
+                "MODEL_BUCKET_KEY_COMPRESSED": aws_codebuild.BuildEnvironmentVariable(value=f"{MODEL_BUCKET_KEY_COMPRESSED}"),
+                "MODEL_BUCKET_KEY_FULL_NAME": aws_codebuild.BuildEnvironmentVariable(value=f"{MODEL_BUCKET_KEY_FULL_NAME}"),
+                "MODEL_HUGGING_FACE_NAME": aws_codebuild.BuildEnvironmentVariable(value=f"{MODEL_HUGGING_FACE_NAME}"),
                 "TAG": aws_codebuild.BuildEnvironmentVariable(
                     value='cdk')
             },
