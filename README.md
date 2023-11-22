@@ -7,33 +7,82 @@ Use it to run GGUF and GMML LLM models on CPU-only instances including Graviton.
 
 ## Installation
 
-### Using public ECR image
+This project is set up like a standard Python project.  The initialization
+process also creates a virtualenv within this project, stored under the `.venv`
+directory.  To create the virtualenv it assumes that there is a `python3`
+(or `python` for Windows) executable in your path with access to the `venv`
+package. If for any reason the automatic creation of the virtualenv fails,
+you can create the virtualenv manually.
 
-1. setup [pull-through cache](https://docs.aws.amazon.com/AmazonECR/latest/userguide/pull-through-cache.html) for the ECR public repository. 
+To manually create a virtualenv on MacOS and Linux:
 
-2. Run `deploy_sagemaker_endpoint` notebook and follow instructions within the notebook. 
-
-### Building your own docker image
-
-1. Build docker image locally (supported paltforms `linux/arm64` and `linux/amd64`)
-
-```bash
-cd docker/
-docker buildx build --platform linux/arm64 -t llmm-cpu-arm64:latest  --load .
 ```
-2. Upload the image to the private ECR repository
+$ python3 -m venv .venv
+```
 
-3. Run `deploy_sagemaker_endpoint` notebook and follow instructions within the notebook. 
+After the init process completes and the virtualenv is created, you can use the following
+step to activate your virtualenv.
+
+```
+$ source .venv/bin/activate
+```
+
+If you are a Windows platform, you would activate the virtualenv like this:
+
+```
+% .venv\Scripts\activate.bat
+```
+
+Once the virtualenv is activated, you can install the required dependencies.
+
+```
+$ pip install -r requirements.txt
+```
+
+At this point you can now synthesize the CloudFormation template for this code.
+
+```
+$ cdk synth
+```
+
+To add additional dependencies, for example other CDK libraries, just add
+them to your `setup.py` file and rerun the `pip install -r requirements.txt`
+command.
+
+## Useful commands
+
+ * `cdk ls`          list all stacks in the app
+ * `cdk synth`       emits the synthesized CloudFormation template
+ * `cdk deploy`      deploy this stack to your default AWS account/region
+ * `cdk diff`        compare deployed stack with current state
+ * `cdk docs`        open CDK documentation
 
 ## Model Selection
 
 1. https://huggingface.co/TheBloke  and choose GGUF model of your choice for example https://huggingface.co/TheBloke/llama-2-7B-Arguments-GGUF , scroll to provided files.  Usually Q4_K_M is good enough compromise (based on my testing but feel free to try yourself)
 
-2. Click on the model file (e.g. llama-2-7b-arguments.Q4_K_M.gguf) there fill be download link that look like this  https://huggingface.co/TheBloke/llama-2-7B-Arguments-GGUF/resolve/main/llama-2-7b-arguments.Q4_K_M.gguf
+2. Replace the name of the variable #TODO
 
-3. You need to download this file and put it on S3 bucket (Smagemaker Endpoint role has to have permissions to access the bucket).
-Follow the instructions in the provided notebook on how to load/inference that model dynamically.
+## Deployment
 
+### Deploy all stacks
+
+`./cicd/cdk-deploy-to.sh <account-id> <region-name> --all` 
+
+For example:
+`./cicd/cdk-deploy-to.sh 012345678901 us-east-1 --all` 
+
+To auto-approve:
+`./cicd/cdk-deploy-to.sh <account-id> <region-name> --all --require-approval never`
+
+Or you can only deploy one stack:
+`./cicd/cdk-destroy-from.sh <account-id> <region-name> ModelDownloadStack` 
+
+
+## Project clean-up
+
+Use destroy script to remove stacks and and approve destroying stacks
+`./cicd/cdk-destroy-from.sh <account-id> <region-name> --all` 
 
 ### Credits
 
