@@ -1,61 +1,7 @@
 # llamacpp
 
-
-Docker image for Llama.cpp and Sagemmaker endpoint compatible API. 
-Can be compiled for both ARM64 and x86 architectures. 
-Use it to run GGUF and GMML LLM models on CPU-only instances including Graviton. 
-
-## Installation
-
-This project is set up like a standard Python project.  The initialization
-process also creates a virtualenv within this project, stored under the `.venv`
-directory.  To create the virtualenv it assumes that there is a `python3`
-(or `python` for Windows) executable in your path with access to the `venv`
-package. If for any reason the automatic creation of the virtualenv fails,
-you can create the virtualenv manually.
-
-To manually create a virtualenv on MacOS and Linux:
-
-```
-$ python3 -m venv .venv
-```
-
-After the init process completes and the virtualenv is created, you can use the following
-step to activate your virtualenv.
-
-```
-$ source .venv/bin/activate
-```
-
-If you are a Windows platform, you would activate the virtualenv like this:
-
-```
-% .venv\Scripts\activate.bat
-```
-
-Once the virtualenv is activated, you can install the required dependencies.
-
-```
-$ pip install -r requirements.txt
-```
-
-At this point you can now synthesize the CloudFormation template for this code.
-
-```
-$ cdk synth
-```
-
-To add additional dependencies, for example other CDK libraries, just add
-them to your `setup.py` file and rerun the `pip install -r requirements.txt`
-command.
-
-## Useful commands
-
- * `cdk ls`          list all stacks in the app
- * `cdk synth`       emits the synthesized CloudFormation template
- * `cdk deploy`      deploy this stack to your default AWS account/region
- * `cdk diff`        compare deployed stack with current state
- * `cdk docs`        open CDK documentation
+This code demonstrates how you can run Large Language Models (LLMs) on CPU-only instances including Graviton. We are using [Llama.cpp project](https://github.com/ggerganov/llama.cpp) and exposing an Sagemaker endpoint API for inference.
+The project can be deployed to be compatible to both ARM64 and x86 architectures. 
 
 ## Model Selection
 
@@ -65,17 +11,25 @@ command.
 
 ## Deployment
 
-### Deploy all stacks
+The project would deploy the following stacks:
+* ModelDownloadStack       - downloads model files to an object store, it creates AWS CodePipeline and Simple Storage Service (S3) bucket
+* ImageBuildingStack       - creates an image used foe inference and pushes it to container registry, creates AWS CodePipeline and Elastic Container Registry (ECR)
+* ModelServingStack        - deploys a model for inference and configures endpoint, creates SageMaker Endpoint and underlying Elastic Compute Cloud (EC2) instance
+* ModelConfigurationStack  - configures inference endpoint, invokes /configure API on SageMaker Endpoint
 
+### Prerequisites
+
+Before proceeding any further, you need to identify and designate an AWS account required for the solution to work. You also need to create an AWS account profile in ~/.aws/credentials for the designated AWS account, if you don’t already have one. The profile needs to have sufficient permissions to run an [AWS Cloud Development Kit](https://aws.amazon.com/cdk/) (AWS CDK) stack. We recommend removing the profile when you’re finished with the testing. For more information about creating an AWS account profile, see [Configuring the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html).
+
+### Deploy
+
+To deploy all stacks:
 `./cicd/cdk-deploy-all-to.sh <account-id> <region-name>` 
 
-For example:
+An example:
 `./cicd/cdk-deploy-all-to.sh 012345678901 us-east-1` 
 
-To auto-approve:
-`./cicd/cdk-deploy-all-to.sh <account-id> <region-name> --require-approval never`
-
-Or you can only deploy one stack:
+To deploy one stack:
 `./cicd/cdk-deploy-stack-to.sh <account-id> <region-name> ModelDownloadStack` 
 
 
