@@ -11,7 +11,10 @@ from aws_cdk import (
 )
 import os
 from constructs import Construct
-import shutil
+import time
+
+from aws_cdk import (aws_cloudformation, RemovalPolicy, CfnResource)
+
 
 class ImageBuildingStack(Stack):
 
@@ -41,7 +44,7 @@ class ImageBuildingStack(Stack):
         # codebuild project meant to run in pipeline
         codebuild_project = aws_codebuild.PipelineProject(
             self, "PipelineProject",
-            project_name=f"{PROJECT_NAME}-image-build",
+            project_name=f"{PROJECT_NAME}-image-building-pipeline",
             build_spec=aws_codebuild.BuildSpec.from_source_filename(
                 filename='docker_build_buildspec.yml'),
             environment=aws_codebuild.BuildEnvironment(
@@ -53,7 +56,6 @@ class ImageBuildingStack(Stack):
                 "CDK_DEPLOY_ACCOUNT": aws_codebuild.BuildEnvironmentVariable(value=os.getenv('CDK_DEPLOY_ACCOUNT') or ""),
                 "CDK_DEPLOY_REGION": aws_codebuild.BuildEnvironmentVariable(value=os.getenv('CDK_DEPLOY_REGION') or ""),
                 "REPOSITORY_NAME": aws_codebuild.BuildEnvironmentVariable(value=f"{REPOSITORY_NAME}"),
-                #"MODEL_BUCKET_NAME": aws_codebuild.BuildEnvironmentVariable(value=f"{bucket.bucket_name}"),
                 "ECR": aws_codebuild.BuildEnvironmentVariable(
                     value=ecr.repository_uri),
                 "TAG": aws_codebuild.BuildEnvironmentVariable(
@@ -70,7 +72,7 @@ class ImageBuildingStack(Stack):
 
         pipeline = aws_codepipeline.Pipeline(
             self, "Pipeline",
-            pipeline_name=f"{PROJECT_NAME}-image-build",
+            pipeline_name=f"{PROJECT_NAME}-image-building-pipeline",
             artifact_bucket=asset_bucket.bucket,
             stages=[
                 aws_codepipeline.StageProps(
@@ -100,9 +102,32 @@ class ImageBuildingStack(Stack):
             ]
         )
 
+        cfn_handle = aws_cloudformation.CfnWaitConditionHandle(
+            self,
+            "ImagePushWaitConditionHandle")
+
+        cfn_wait_condition = aws_cloudformation.CfnWaitCondition(
+            self, 
+            "ImagePushWaitCondition",
+            timeout="900",
+            count=1,
+            handle=cfn_handle.ref
+        )
+
+        image_resource = CfnResource(self, "Resource",
+                    type="AWS::ECR::Repository",
+                    properties={
+                        "RepositoryName": ecr.repository_uri
+                    }
+                )
+
+        cfn_wait_condition.add_depends_on(image_resource)
+        cfn_wait_condition.apply_removal_policy(RemovalPolicy.DESTROY)
+
         CfnOutput(scope=self,
             id="image_repository_uri", 
             value=ecr.repository_uri, 
             export_name="var-modelrepositoryuri"
             )
+
 

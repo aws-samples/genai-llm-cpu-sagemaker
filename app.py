@@ -4,6 +4,8 @@ import boto3
 import aws_cdk as cdk
 import time
 
+from aws_cdk import (aws_cloudformation, RemovalPolicy, CfnResource)
+
 from infrastructure.model_serving_stack import ModelServingStack
 from infrastructure.image_building_stack import ImageBuildingStack
 from infrastructure.model_download_stack import ModelDownloadStack
@@ -38,30 +40,24 @@ imageBuildingStack = ImageBuildingStack(app,
     "ImageBuildingStack", 
     env=environment,
     project_name=config["project_name"], 
-    repository_name=config["project_name"], 
+    repository_name=config["repository_name"], 
     image_bucket_name=config["image_bucket_name"], 
     model_bucket_name=cdk.Fn.import_value("var-modelbucketname"),
     )
-
 
 modelServingStack = ModelServingStack(app, 
     "ModelServingStack", 
     env=environment, 
     sagemaker_role_name=config["sagemaker_role_name"],
     instance_type=config["instance_type"], 
-    model_repository_image=cdk.Fn.import_value("var-modelrepositoryuri"), 
+    model_repository_uri=cdk.Fn.import_value("var-modelrepositoryuri"), 
     model_bucket_name=cdk.Fn.import_value("var-modelbucketname"), 
     model_bucket_key=config["model_bucket_key"], 
     sagemaker_model_name=config["sagemaker_model_name"],
     )
 
-#TODO wait for image to be built instead of time delay / resource creation
-# cfn_wait_condition = aws_cloudformation.CfnWaitCondition(modelServingStack, id="WaitCondition",
-#     count=15*60,
-# )
-
-#TODO wait until SageMaker model is InService before configuring it
-#TODO replace with post-script exec or custome resource (Lambda) or CustomState! https://github.com/aws/aws-cdk/issues/21610
+modelServingStack.add_dependency(imageBuildingStack)
+modelServingStack.add_dependency(modelDownloadStack)
 
 modelConfigurationStack = ModelConfigurationStack(app, 
     "ModelConfigurationStack",
@@ -70,5 +66,8 @@ modelConfigurationStack = ModelConfigurationStack(app,
     model_bucket_name=cdk.Fn.import_value("var-modelbucketname"),
     sagemaker_endpoint_name=cdk.Fn.import_value("var-sagemakerendpointname"),
     )
+
+modelConfigurationStack.add_dependency(imageBuildingStack)
+modelConfigurationStack.add_dependency(modelDownloadStack)
 
 app.synth()

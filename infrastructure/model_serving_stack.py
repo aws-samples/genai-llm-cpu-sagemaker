@@ -20,9 +20,11 @@ from sagemaker import script_uris
 from sagemaker import image_uris 
 from sagemaker import model_uris
 
+from aws_cdk import (aws_cloudformation, RemovalPolicy, CfnResource)
+
 class ModelServingStack(Stack):
 
-    def __init__(self, scope: Construct, construct_id: str, env, sagemaker_role_name: str, instance_type: str, model_repository_image: str, model_bucket_name: str, model_bucket_key: str, sagemaker_model_name: str, **kwargs) -> None:
+    def __init__(self, scope: Construct, construct_id: str, env, sagemaker_role_name: str, instance_type: str, model_repository_uri: str, model_bucket_name: str, model_bucket_key: str, sagemaker_model_name: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         ROLE_NAME = sagemaker_role_name
@@ -30,7 +32,7 @@ class ModelServingStack(Stack):
 
         MODEL_BUCKET_NAME = model_bucket_name
         MODEL_BUCKET_KEY = model_bucket_key
-        MODEL_REPOSITORY_IMAGE = model_repository_image
+        MODEL_REPOSITORY_URI = model_repository_uri
 
         INSTANCE_TYPE = instance_type # make sure you use correct instance types x86 or graviton 
 
@@ -105,7 +107,7 @@ class ModelServingStack(Stack):
                                     model_name = f"{MODEL_NAME}",
                                     model_bucket_name = f"{MODEL_BUCKET_NAME}",
                                     model_bucket_key = f"{MODEL_BUCKET_KEY}",
-                                    model_repository_image = f"{MODEL_REPOSITORY_IMAGE}:latest",
+                                    model_repository_image = f"{MODEL_REPOSITORY_URI}:latest", #TODO do not hardcode tags
 
                                     variant_name = "AllTraffic",
                                     variant_weight = 1,
@@ -126,6 +128,20 @@ class ModelServingStack(Stack):
         endpoint.node.add_dependency(sts_policy)
         endpoint.node.add_dependency(logs_policy)
         endpoint.node.add_dependency(ecr_policy)
+
+        cfn_handle = aws_cloudformation.CfnWaitConditionHandle(
+            self,
+            "ModelInServiceWaitConditionHandle")
+
+        cfn_wait_condition = aws_cloudformation.CfnWaitCondition(
+            self, 
+            "ModelInServiceWaitCondition",
+            timeout="180",
+            count=1,
+            handle=cfn_handle.ref
+        )
+        
+        cfn_wait_condition.apply_removal_policy(RemovalPolicy.DESTROY)
 
         CfnOutput(scope=self,
             id="sagemaker_endpoint_name", 
