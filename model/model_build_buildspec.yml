@@ -6,14 +6,19 @@ env:
 phases:
   install:
     commands:
-      - echo Entered the post-build phase...
+      - echo Entered the install phase...
       - sudo apt-get update
       - sudo apt-get install -y python3-pip
       - pip3 install huggingface-hub>=0.17.1 hf_transfer
   build:
     on-failure: CONTINUE
     commands:
-      - HUGGINGFACE_HUB_ENABLE_HF_TRANSFER=1 huggingface-cli download TheBloke/Llama-2-7b-Chat-GGUF llama-2-7b-chat.Q4_K_M.gguf --local-dir . --local-dir-use-symlinks False
-      - tar -czf llama-2-7b-chat.tar.gz llama-2-7b-chat.Q4_K_M.gguf
-      - aws s3 cp llama-2-7b-chat.tar.gz s3://${MODEL_BUCKET_NAME}/
-      - aws s3 cp llama-2-7b-chat.Q4_K_M.gguf s3://${MODEL_BUCKET_NAME}/
+      - echo Entered the build phase...
+      - echo Downloading model
+      - HUGGINGFACE_HUB_ENABLE_HF_TRANSFER=1 huggingface-cli download ${MODEL_HUGGING_FACE_NAME} ${MODEL_BUCKET_KEY_FULL_NAME} --local-dir . --local-dir-use-symlinks False
+      - echo Compressing file
+      - tar -czf ${MODEL_BUCKET_KEY_COMPRESSED} ${MODEL_BUCKET_KEY_FULL_NAME}
+      - echo Copying compressed file
+      - aws s3 cp ${MODEL_BUCKET_KEY_COMPRESSED} s3://${MODEL_BUCKET_NAME}/
+      - echo Copying uncompressed file
+      - aws s3 cp ${MODEL_BUCKET_KEY_FULL_NAME} s3://${MODEL_BUCKET_NAME}/
