@@ -15,28 +15,34 @@
 
 #!/usr/bin/env bash
 
+sleepwithcountdown() {
+  secs=$1
+  while [ $secs -gt 0 ]; do
+    printf "\rcountdown: $secs\033[0K"
+    sleep 1
+    : $((secs--))
+  done
+  printf "\n"
+}
+
 if [[ $# -ge 2 ]]; then
     export CDK_DEPLOY_ACCOUNT=$1
     export CDK_DEPLOY_REGION=$2
     shift; shift
-    
-    echo ==--------CheckDedendencies---------==
-    aws --version
-    cdk --version
-    jq --version
-    npx cdk init app --language python "$@"
-
-    echo ==--------InstallCDKDependencies---------==
-    npx source .venv/bin/activate
-    npx python -m pip install -r requirements.txt
-
-    echo ==--------BootstrapCDKEnvironment---------==
-    npx cdk bootstrap
+    npx cdk deploy ModelDownloadStack "$@" --require-approval never 
+    npx cdk deploy ImageBuildingStack "$@" --require-approval never 
+    echo "Wait for an image to be built and pushed to ECR..."
+    sleepwithcountdown 730
+    npx cdk deploy ModelServingStack "$@" --require-approval never 
+    echo "Wait for model to be InService..."
+    sleepwithcountdown 30
+    npx cdk deploy ModelConfigurationStack "$@" --require-approval never
     exit $?
 else
     echo 1>&2 "Provide account and region as first two args."
     echo 1>&2 "Additional args are passed through to cdk deploy."
     exit 1
 fi
+
 
 
