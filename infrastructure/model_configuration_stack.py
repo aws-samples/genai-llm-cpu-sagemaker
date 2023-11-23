@@ -2,26 +2,35 @@ from aws_cdk import (
     Stack,
     CfnOutput, 
     Duration,
-    aws_ssm,
     aws_stepfunctions,
-    aws_iam
+    aws_stepfunctions_tasks,
+    aws_codepipeline,
+    aws_codepipeline_actions,
+    aws_iam,
+    aws_s3_assets
 )
 from constructs import Construct
 
 import boto3
 import json
+import os
 
 class ModelConfigurationStack(Stack):
 
-    def __init__(self, scope: Construct, construct_id: str, model_bucket_key: str, model_bucket_name: str, sagemaker_endpoint_name:str, env, **kwargs) -> None:
+    def __init__(self, scope: Construct, construct_id: str, 
+            model_bucket_key: str, 
+            model_bucket_name: str, 
+            sagemaker_endpoint_name:str, 
+            project_name: str,
+            env, **kwargs) -> None:
         super().__init__(scope, construct_id, env=env, **kwargs)
 
         MODEL_BUCKET_KEY_FILE = model_bucket_key
         ENDPOINT_NAME = sagemaker_endpoint_name
         MODEL_BUCKET_NAME = model_bucket_name
+        PROJECT_NAME = project_name
 
-        REGION_NAME = str(env.region)
-        ACCOUNT = str(env.account)
+        ROOT_DIR = os.path.abspath(os.curdir)
 
         """
         Wait until your model is InService.
@@ -76,7 +85,6 @@ class ModelConfigurationStack(Stack):
             "Resource": "arn:aws:states:::aws-sdk:sagemakerruntime:invokeEndpoint",
         }
 
-        # custom state which represents a task
         custom_state = aws_stepfunctions.CustomState(self, "invoke sagemaker configure endpoint",
             state_json=state_json
         )
@@ -90,14 +98,50 @@ class ModelConfigurationStack(Stack):
 
         state_machine.add_to_role_policy(statement=aws_iam.PolicyStatement(
                 actions=["sagemaker:InvokeEndpoint"],
-                resources=["*"] #TODO arn:aws:sagemaker:{REGION_NAME}:{ACCOUNT}:endpoint/{ENDPOINT_NAME} includes Token[]
+                resources=["*"]
             )
         )
 
-        CfnOutput(scope=self,
-            id="sagemaker_invoke_endpoint_state_machine", 
-            value=state_machine.state_machine_name, 
+        pipeline = aws_codepipeline.Pipeline(self, 
+            f"{PROJECT_NAME}-model-configuration-pipeline"
             )
+
+        input_artifact = aws_codepipeline.Artifact()
+
+        asset_bucket = aws_s3_assets.Asset(self, "ModelAssets",
+            path = os.path.join(ROOT_DIR, "model"),
+        )
+
+        source_output = aws_codepipeline.Artifact(artifact_name='source')
+
+        source_action = aws_codepipeline_actions.S3SourceAction(
+            bucket=asset_bucket.bucket,
+            bucket_key=asset_bucket.s3_object_key,
+            action_name='Source',
+            run_order=1,
+            output=source_output,  
+        )
+ 
+        step_function_action = aws_codepipeline_actions.StepFunctionInvokeAction(
+            action_name="Invoke",
+            state_machine=state_machine,
+            run_order=2        
+        )
+
+        pipeline.add_stage(
+            stage_name="Source",
+            actions=[source_action]
+        )
+
+        pipeline.add_stage(
+            stage_name="StepFunctions",
+            actions=[step_function_action]
+        )
+
+        CfnOutput(scope=self,
+            id="sagemaker_invoke_endpoint_state_machine_name", 
+            value=state_machine.state_machine_name, 
+        )
        
 
 
