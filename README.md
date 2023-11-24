@@ -39,10 +39,10 @@ To deploy one stack: \
 
 ## Project clean-up
 
-Use destroy script to remove stacks and approve destroying stacks: \
+Use destroy script to remove stacks: \
 `./cicd/cdk-undeploy-from.sh <account-id> <region-name> --all` 
 
-Or use destroy script to remove single stack and approve destroying a stack: \
+Or use destroy script to remove single stack: \
 `./cicd/cdk-undeploy-from.sh <account-id> <region-name> ModelServingStack` 
 
 ## Model Selection

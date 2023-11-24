@@ -9,6 +9,7 @@ __pycache__
 .cdk.staging
 cdk.out
 .DS_Store
+node_modules
 .local.*
 *.zip
 *.tar.gz
