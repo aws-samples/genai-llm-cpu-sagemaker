@@ -74,6 +74,7 @@ modelServingStack.add_dependency(modelDownloadStack)
 modelConfigurationStack = ModelConfigurationStack(app, 
     "ModelConfigurationStack",
     env=environment,
+    project_name=project_name, 
     model_bucket_key=model_bucket_key_full_name,
     model_bucket_name=cdk.Fn.import_value("var-modelbucketname"),
     sagemaker_endpoint_name=cdk.Fn.import_value("var-sagemakerendpointname"),
