@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM public.ecr.aws/ubuntu/ubuntu:22.04_stable
 ENV DEBIAN_FRONTEND noninteractive
 
 # Sets dumping log messages directly to stream instead of buffering
@@ -10,6 +10,8 @@ ENV PATH=$PATH:/app
 
 # The working directory in the Docker image
 WORKDIR /app
+
+RUN apt-get autoclean
 
 # Install system dependencies
 RUN apt-get update && \

@@ -1,0 +1,21 @@
+version: 0.2
+
+env:
+  shell: bash
+
+phases:
+  install:
+    commands:
+      - mkdir -p $HOME/.docker/cli-plugins
+      - export BUILDX_VERSION=$(curl --silent "https://api.github.com/repos/docker/buildx/releases/latest" |jq -r .tag_name)
+      - wget -O $HOME/.docker/cli-plugins/docker-buildx https://github.com/docker/buildx/releases/download/$BUILDX_VERSION/buildx-$BUILDX_VERSION.linux-arm64
+      - chmod a+rx $HOME/.docker/cli-plugins/docker-buildx
+      - docker run --privileged --rm public.ecr.aws/eks-distro-build-tooling/binfmt-misc:qemu-v7.0.0  --install arm64
+      - export DOCKER_BUILDKIT=1
+      - export DOCKER_CLI_EXPERIMENTAL=enabled
+  build:
+    commands:
+      - echo Entered the build phase...
+      - bash ./image-build.sh $CDK_DEPLOY_ACCOUNT $CDK_DEPLOY_REGION $REPOSITORY_NAME
+      - echo Entered the post_build phase...
+      - bash ./image-push.sh $CDK_DEPLOY_ACCOUNT $CDK_DEPLOY_REGION $REPOSITORY_NAME
