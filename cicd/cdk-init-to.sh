@@ -23,9 +23,10 @@ if [[ $# -ge 2 ]]; then
     echo ==--------CheckDedendencies---------==
     aws --version
     cdk --version
-    python --version
+    python3 --version
 
     echo ==--------InstallCDKDependencies---------==
+    python3 -m venv .venv
     source .venv/bin/activate
     python -m pip install -r requirements.txt
 
