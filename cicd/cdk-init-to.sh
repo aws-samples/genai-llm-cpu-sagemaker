@@ -24,7 +24,6 @@ if [[ $# -ge 2 ]]; then
     aws --version
     cdk --version
     python --version
-    #npx cdk init app --language python "$@"
 
     echo ==--------InstallCDKDependencies---------==
     source .venv/bin/activate
