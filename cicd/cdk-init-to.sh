@@ -23,7 +23,6 @@ if [[ $# -ge 2 ]]; then
     echo ==--------CheckDedendencies---------==
     aws --version
     cdk --version
-    jq --version
     npx cdk init app --language python "$@"
 
     echo ==--------InstallCDKDependencies---------==
