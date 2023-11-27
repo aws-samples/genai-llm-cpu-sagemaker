@@ -33,7 +33,7 @@ if [[ $# -ge 2 ]]; then
     cdk deploy ModelDownloadStack "$@" --require-approval never 
     cdk deploy ImageBuildingStack "$@" --require-approval never 
     echo "Wait for an image to be built and pushed to ECR..."
-    sleepwithcountdown 730
+    sleepwithcountdown 460
     cdk deploy ModelServingStack "$@" --require-approval never 
     echo "Wait for model to be InService..."
     sleepwithcountdown 10
