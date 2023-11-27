@@ -20,7 +20,7 @@ if [[ $# -ge 2 ]]; then
     export CDK_DEPLOY_REGION=$2
     shift; shift
     source .venv/bin/activate
-    cdk deploy "$@" --require-approval never
+    cdk deploy "$@" # --require-approval never
     exit $?
 else
     echo 1>&2 "Provide account and region as first two args."
