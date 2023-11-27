@@ -49,15 +49,22 @@ Or use destroy script to remove single stack: \
 
 1. Navigate to https://huggingface.co/TheBloke and choose GGUF model of your choice for example https://huggingface.co/TheBloke/llama-2-7B-Arguments-GGUF, scroll to provided files. Usually Q4_K_M is good enough compromise (based on our testing but feel free to try yourself).
 
-2. Update values of the variables in `app-config.ini` to use a new model:
+2. Destroy previous Sagemaker configuration stack and endpoint:
+`./cicd/cdk-undeploy-from.sh <account-id> <region-name> ModelConfigurationStack` 
+`./cicd/cdk-undeploy-from.sh <account-id> <region-name> ModelServingStack` 
+
+3. Update values of the variables in `app-config.ini` to use a new model:
     * model_hugging_face_name - set Hugging Face model name e.g. "TheBloke/llama-2-7B-Arguments-GGUF"
     * model_full_name         - set Hugging Face file full name e.g. "llama-2-7b-chat.Q4_K_M.gguf"
 
-3. Re-run ModelDownload stack to download new model to S3 bucket:
+4. Re-run ModelDownload stack to and wait for as new model to be downloaded to S3 bucket:
 `./cicd/cdk-deploy-stack-to.sh <account-id> <region-name> ModelDownloadStack` \
+> model bucket name is value of the output parameter ModelDownloadStack.modelbucketname 
 
-4. Deploy and configure new SageMaker Endpoint:
+5.Create new Sagemaker endpoint:
 `./cicd/cdk-deploy-stack-to.sh <account-id> <region-name> ModelServingStack` \
+
+6. Wait until endpoint is InService and configure new Sagemaker endpoint:
 `./cicd/cdk-deploy-stack-to.sh <account-id> <region-name> ModelConfigurationStack` \
 
 ### Credits
