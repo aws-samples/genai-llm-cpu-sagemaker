@@ -21,6 +21,7 @@ if [[ $# -ge 2 ]]; then
     shift; shift
 
     echo ==--------DestroyStacks---------==
+    source .venv/bin/activate
     echo 'y' | cdk destroy "$@" --require-approval never
     exit $?
 
