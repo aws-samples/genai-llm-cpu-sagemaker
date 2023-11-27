@@ -32,10 +32,11 @@ class ImageBuildingStack(Stack):
             self, "ECR",
             repository_name=f"{REPOSITORY_NAME}",
             removal_policy=RemovalPolicy.DESTROY,
-            #auto_delete_images=True,
+            auto_delete_images=True
         )
 
         standard_image = aws_codebuild.LinuxBuildImage.STANDARD_6_0
+        compute_type = aws_codebuild.ComputeType.LARGE # to decrease wait time
 
         # codebuild project meant to run in pipeline
         codebuild_project = aws_codebuild.PipelineProject(
@@ -45,7 +46,8 @@ class ImageBuildingStack(Stack):
                 filename='docker_build_buildspec.yml'),
             environment=aws_codebuild.BuildEnvironment(
                 privileged=True,
-                build_image=standard_image
+                build_image=standard_image,
+                compute_type=compute_type
             ),
             # pass the ecr repo uri into the codebuild project so codebuild knows where to push
             environment_variables={
