@@ -57,9 +57,11 @@ Or use destroy script to remove single stack: \
     * model_hugging_face_name - set Hugging Face model name e.g. "TheBloke/llama-2-7B-Arguments-GGUF"
     * model_full_name         - set Hugging Face file full name e.g. "llama-2-7b-chat.Q4_K_M.gguf"
 
-4. Re-run ModelDownload stack to and wait for as new model to be downloaded to S3 bucket:
+4. Re-run ModelDownload stack to update project environment variables:
 `./cicd/cdk-deploy-stack-to.sh <account-id> <region-name> ModelDownloadStack` \
 > model bucket name is value of the output parameter ModelDownloadStack.modelbucketname 
+
+4.1. Manually trigger CodePipeline project "<project_name>-model-download-pipeline" from the Console UI, and wait for as new model to be downloaded to S3 bucket.
 
 5.Create new Sagemaker endpoint:
 `./cicd/cdk-deploy-stack-to.sh <account-id> <region-name> ModelServingStack` \
