@@ -22,14 +22,14 @@ from construct.sagemaker_endpoint_construct import SageMakerEndpointConstruct
 
 class ModelServingStack(Stack):
 
-    def __init__(self, scope: Construct, construct_id: str, env, sagemaker_role_name: str, instance_type: str, model_repository_uri: str, model_bucket_name: str, model_bucket_key: str, sagemaker_model_name: str, **kwargs) -> None:
+    def __init__(self, scope: Construct, construct_id: str, env, sagemaker_role_name: str, instance_type: str, model_repository_uri: str, model_bucket_name: str, sagemaker_model_name: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         ROLE_NAME = sagemaker_role_name
         REGION_NAME = str(env.region)
 
         MODEL_BUCKET_NAME = model_bucket_name
-        MODEL_BUCKET_KEY = model_bucket_key
+        #MODEL_BUCKET_KEY = model_bucket_key
         MODEL_REPOSITORY_URI = model_repository_uri
 
         INSTANCE_TYPE = instance_type # make sure you use correct instance types x86 or graviton 
@@ -98,8 +98,8 @@ class ModelServingStack(Stack):
                                     role_arn= sagemaker_role.role_arn,
 
                                     model_name = f"{MODEL_NAME}",
-                                    model_bucket_name = f"{MODEL_BUCKET_NAME}",
-                                    model_bucket_key = f"{MODEL_BUCKET_KEY}",
+                                    # model_bucket_name = f"{MODEL_BUCKET_NAME}",
+                                    # model_bucket_key = f"{MODEL_BUCKET_KEY}",
                                     model_repository_image = f"{MODEL_REPOSITORY_URI}:latest", #TODO do not hardcode tags
 
                                     variant_name = "AllTraffic",
