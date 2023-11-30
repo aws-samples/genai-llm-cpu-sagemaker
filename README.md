@@ -17,7 +17,7 @@ AWS CDK app configuration file values are in `app-config.ini`:
 | model.model_hugging_face_name | [HuggingFace](https://huggingface.co) model name | TheBloke/Llama-2-7b-Chat-GGUF |
 | model.model_full_name | [HuggingFace](https://huggingface.co) model file full name | llama-2-7b-chat.Q4_K_M.gguf |
 | image.image_repository_name | Named of ECR repository containing model image | my-model-image-repository |
-| inference.sagemaker_role_name | SageMaker IAM role name | sagemaker-execution-role |
+| inference.sagemaker_role_name | SageMaker IAM role name | my-sagemaker-execution-role |
 | inference.instance_type | Instance type used for SageMaker Endpoint | ml.c7g.2xlarge |
 
 The project consists of the following stacks in `./infrastructure` directory:
@@ -68,9 +68,9 @@ Only changing a model does not require rebuidling an image, and would take appro
     * model_hugging_face_name - set Hugging Face model name e.g. "TheBloke/llama-2-7B-Arguments-GGUF"
     * model_full_name         - set Hugging Face file full name e.g. "llama-2-7b-chat.Q4_K_M.gguf"
 
-3. Confirm that you would like to proceed with destroying previously used model's S3 bucket, Sagemaker configuration and endpoint:
+3. Confirm that you would like to proceed with destroying previously used model's S3 bucket, Sagemaker configuration and endpoint: \
 `./cicd/cdk-change-model.sh <account-id> <region-name> ModelConfigurationStack` 
-> `This action would destroy your current deployment. Are you sure that you want to proceed? y` 
+> You will be prompted with the question `This action would destroy your current deployment. Are you sure that you want to proceed?`, type Y to confirm. 
 
 ### Credits
 
