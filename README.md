@@ -11,20 +11,20 @@ The `cdk.json` file tells the CDK Toolkit how to execute your app.
 AWS CDK app configuration file values are in `app-config.ini`:
 
 | Parameter | Description | Example value | 
-| :---        |    :----:   |       ---: |
+| :---    | :---    | :---    |
 | project.project_name | Used as prefix for AWS resources created with this app | cpu-llm |
 | model.model_bucket_prefix | Prefix for S3 bucket containing model files | my-model-bucket |
 | model.model_hugging_face_name | [HuggingFace](https://huggingface.co) model name | TheBloke/Llama-2-7b-Chat-GGUF |
 | model.model_full_name | [HuggingFace](https://huggingface.co) model file full name | llama-2-7b-chat.Q4_K_M.gguf |
 | image.image_repository_name | Named of ECR repository containing model image | my-model-image-repository |
 | inference.sagemaker_role_name | SageMaker IAM role name | sagemaker-execution-role |
-| inference.instance_type | Instance type used for SageMaker Endpoint; Make sure you use correct instance types x86 or Graviton | ml.c7g.2xlarge |
+| inference.instance_type | Instance type used for SageMaker Endpoint | ml.c7g.2xlarge |
 
 The project consists of the following stacks in `./infrastructure` directory:
-* ModelDownloadStack       - downloads model files to an object store, it creates AWS CodePipeline and Simple Storage Service (S3) bucket
-* ImageBuildingStack       - creates an image used for inference and pushes it to container registry, creates AWS CodePipeline and Elastic Container Registry (ECR)
-* ModelServingStack        - deploys a model for inference and configures endpoint, creates SageMaker Endpoint and underlying Elastic Compute Cloud (EC2) instance
-* ModelConfigurationStack  - configures inference endpoint, invokes /configure API on SageMaker Endpoint
+* **ModelDownloadStack**      - downloads model files to an object store, it creates AWS CodePipeline and Simple Storage Service (S3) bucket
+* **ImageBuildingStack**      - creates an image used for inference and pushes it to container registry, creates AWS CodePipeline and Elastic Container Registry (ECR)
+* **ModelServingStack**       - deploys a model for inference and configures endpoint, creates SageMaker Endpoint and underlying Elastic Compute Cloud (EC2) instance
+* **ModelConfigurationStack** - configures inference endpoint, invokes /configure API on SageMaker Endpoint
 
 ### Prerequisites
 
