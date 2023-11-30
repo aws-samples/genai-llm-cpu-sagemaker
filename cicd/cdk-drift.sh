@@ -24,7 +24,7 @@ if [[ $# -ge 2 ]]; then
     echo ==--------CheckCDKDifferences---------==
     source .venv/bin/activate
     # Compares the specified stack and its dependencies with the deployed stacks
-    cdk diff
+    cdk diff "$@" -v
 
 else
     echo 1>&2 "Provide account and region as first two args."

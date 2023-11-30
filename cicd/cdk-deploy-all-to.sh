@@ -36,7 +36,7 @@ if [[ $# -ge 2 ]]; then
     sleepwithcountdown 460
     cdk deploy ModelServingStack "$@" --require-approval never 
     echo "Wait for model to be InService..."
-    sleepwithcountdown 10
+    sleepwithcountdown 5
     cdk deploy ModelConfigurationStack "$@" --require-approval never
     exit $?
 else
