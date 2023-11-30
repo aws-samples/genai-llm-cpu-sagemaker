@@ -8,11 +8,21 @@ The project can be deployed to be compatible to both ARM64 and x86 architectures
 This project is built by using [AWS Cloud Development Kit](https://aws.amazon.com/cdk/)(AWS CDK)  with Python.
 The `cdk.json` file tells the CDK Toolkit how to execute your app.
 
-AWS CDK app configuration file values are in `app-config.ini`.
+AWS CDK app configuration file values are in `app-config.ini`:
+
+| Parameter | Description | Example value | 
+| :---        |    :----:   |       ---: |
+| project.project_name | Used as prefix for AWS resources created with this app | cpu-llm |
+| model.model_bucket_prefix | Prefix for S3 bucket containing model files | my-model-bucket |
+| model.model_hugging_face_name | [HuggingFace](https://huggingface.co) model name | TheBloke/Llama-2-7b-Chat-GGUF |
+| model.model_full_name | [HuggingFace](https://huggingface.co) model file full name | llama-2-7b-chat.Q4_K_M.gguf |
+| image.image_repository_name | Named of ECR repository containing model image | my-model-image-repository |
+| inference.sagemaker_role_name | SageMaker IAM role name | sagemaker-execution-role |
+| inference.instance_type | Instance type used for SageMaker Endpoint; Make sure you use correct instance types x86 or Graviton | ml.c7g.2xlarge |
 
 The project consists of the following stacks in `./infrastructure` directory:
 * ModelDownloadStack       - downloads model files to an object store, it creates AWS CodePipeline and Simple Storage Service (S3) bucket
-* ImageBuildingStack       - creates an image used foe inference and pushes it to container registry, creates AWS CodePipeline and Elastic Container Registry (ECR)
+* ImageBuildingStack       - creates an image used for inference and pushes it to container registry, creates AWS CodePipeline and Elastic Container Registry (ECR)
 * ModelServingStack        - deploys a model for inference and configures endpoint, creates SageMaker Endpoint and underlying Elastic Compute Cloud (EC2) instance
 * ModelConfigurationStack  - configures inference endpoint, invokes /configure API on SageMaker Endpoint
 
@@ -37,37 +47,30 @@ For example: \
 To deploy one stack: \
 `./cicd/cdk-deploy-stack-to.sh <account-id> <region-name> ModelDownloadStack` 
 
+To check application drift, and compare specified stack and its dependencies with the deployed stack: \
+`./cicd/cdk-drift.sh <account-id> <region-name> -v` 
+
 ## Project clean-up
 
-Use destroy script to remove stacks: \
+Use destroy script to remove all stacks: \
 `./cicd/cdk-undeploy-from.sh <account-id> <region-name> --all` 
 
-Or use destroy script to remove single stack: \
+Or use destroy script to remove a single stack: \
 `./cicd/cdk-undeploy-from.sh <account-id> <region-name> ModelServingStack` 
 
 ## Model Selection
 
+Only changing a model does not require rebuidling an image, and would take approximatelly 30% less time than redeploying the whole application. You can use the following process:
+
 1. Navigate to https://huggingface.co/TheBloke and choose GGUF model of your choice for example https://huggingface.co/TheBloke/llama-2-7B-Arguments-GGUF, scroll to provided files. Usually Q4_K_M is good enough compromise (based on our testing but feel free to try yourself).
 
-2. Destroy previous Sagemaker configuration stack and endpoint:
-`./cicd/cdk-undeploy-from.sh <account-id> <region-name> ModelConfigurationStack` 
-`./cicd/cdk-undeploy-from.sh <account-id> <region-name> ModelServingStack` 
-
-3. Update values of the variables in `app-config.ini` to use a new model:
+2. Update values of the variables in `app-config.ini` to use a new model:
     * model_hugging_face_name - set Hugging Face model name e.g. "TheBloke/llama-2-7B-Arguments-GGUF"
     * model_full_name         - set Hugging Face file full name e.g. "llama-2-7b-chat.Q4_K_M.gguf"
 
-4. Re-run ModelDownload stack to update project environment variables:
-`./cicd/cdk-deploy-stack-to.sh <account-id> <region-name> ModelDownloadStack` \
-> model bucket name is value of the output parameter ModelDownloadStack.modelbucketname 
-
-4.1. Manually trigger CodePipeline project "<project_name>-model-download-pipeline" from the Console UI, and wait for as new model to be downloaded to S3 bucket.
-
-5.Create new Sagemaker endpoint:
-`./cicd/cdk-deploy-stack-to.sh <account-id> <region-name> ModelServingStack` \
-
-6. Wait until endpoint is InService and configure new Sagemaker endpoint:
-`./cicd/cdk-deploy-stack-to.sh <account-id> <region-name> ModelConfigurationStack` \
+3. Confirm that you would like to proceed with destroying previously used model's S3 bucket, Sagemaker configuration and endpoint:
+`./cicd/cdk-change-model.sh <account-id> <region-name> ModelConfigurationStack` 
+> `This action would destroy your current deployment. Are you sure that you want to proceed? y` 
 
 ### Credits
 
