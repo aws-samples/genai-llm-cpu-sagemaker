@@ -36,7 +36,7 @@ Use the following init script on MacOS and Linux or manually create and activate
 
 To add additional dependencies, for example other CDK libraries, add them to your `setup.py` file and rerun the `pip install -r requirements.txt` command.
 
-## To Deploy Resources / Stacks
+## To Create Resources / Deploy Stacks
 
 To deploy all stacks: \
 `./cicd/cdk-deploy-all-to.sh <account-id> <region-name>` 
@@ -64,13 +64,13 @@ Only changing a model does not require rebuidling an image, and would take appro
 
 1. Navigate to https://huggingface.co/TheBloke and choose GGUF model of your choice for example https://huggingface.co/TheBloke/llama-2-7B-Arguments-GGUF, scroll to provided files. Usually Q4_K_M is good enough compromise (based on our testing but feel free to try yourself).
 
-2. Update values of the variables in `app-config.ini` to use a new model:
+2. Update values of the variables in `app-config.ini` to use the new model:
     * model_hugging_face_name - set Hugging Face model name e.g. "TheBloke/llama-2-7B-Arguments-GGUF"
     * model_full_name         - set Hugging Face file full name e.g. "llama-2-7b-chat.Q4_K_M.gguf"
 
-3. Confirm that you would like to proceed with destroying previously used model's S3 bucket, Sagemaker configuration and endpoint: \
+3. Run a script to destroy previously used model's S3 bucket, Sagemaker configuration and endpoint and re-create new model resources: \
 `./cicd/cdk-change-model.sh <account-id> <region-name> ModelConfigurationStack` 
-> You will be prompted with the question `This action would destroy your current deployment. Are you sure that you want to proceed?`, type Y to confirm. 
+> You will be prompted with a question: `This action would destroy your current deployment. Are you sure that you want to proceed?`, type Y to confirm. 
 
 ### Credits
 
