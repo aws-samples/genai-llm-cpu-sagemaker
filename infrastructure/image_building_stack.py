@@ -14,12 +14,15 @@ from constructs import Construct
 
 class ImageBuildingStack(Stack):
 
-    def __init__(self, scope: Construct, construct_id: str, project_name: str, repository_name: str, image_bucket_name: str, model_bucket_name: str, env, **kwargs) -> None:
+    def __init__(self, scope: Construct, construct_id: str, 
+        project_name: str, 
+        repository_name: str, 
+        model_bucket_name: str, 
+        **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         PROJECT_NAME = project_name
         REPOSITORY_NAME = repository_name
-        IMAGE_BUCKET_NAME = image_bucket_name 
         MODEL_BUCKET_NAME = model_bucket_name
         ROOT_DIR = os.path.abspath(os.curdir)
 
@@ -30,7 +33,7 @@ class ImageBuildingStack(Stack):
         # ecr repo to push docker container into
         ecr = aws_ecr.Repository(
             self, "ECR",
-            repository_name=f"{REPOSITORY_NAME}",
+            repository_name=f"{PROJECT_NAME}-{REPOSITORY_NAME}",
             removal_policy=RemovalPolicy.DESTROY,
             auto_delete_images=True
         )

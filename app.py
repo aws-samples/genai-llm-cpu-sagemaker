@@ -27,7 +27,6 @@ model_bucket_prefix        = config.get("model", "model_bucket_prefix").replace(
 model_hugging_face_name    = config.get("model", "model_hugging_face_name").replace('"', '')
 model_bucket_key_full_name = config.get("model", "model_full_name").replace('"', '')
 
-image_bucket_prefix        = config.get("image", "image_bucket_prefix").replace('"', '')
 image_repository_name      = config.get("image", "image_repository_name").replace('"', '')
 
 sagemaker_role_name        = config.get("inference", "sagemaker_role_name").replace('"', '')
@@ -51,13 +50,13 @@ imageBuildingStack = ImageBuildingStack(app,
     env=environment,
     project_name=project_name, 
     repository_name=image_repository_name, 
-    image_bucket_name=image_bucket_prefix, 
     model_bucket_name=cdk.Fn.import_value("var-modelbucketname"),
     )
 
 modelServingStack = ModelServingStack(app, 
     "ModelServingStack", 
     env=environment, 
+    project_name=project_name, 
     sagemaker_role_name=sagemaker_role_name,
     instance_type=instance_type, 
     model_repository_uri=cdk.Fn.import_value("var-modelrepositoryuri"), 

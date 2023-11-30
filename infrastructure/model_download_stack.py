@@ -25,10 +25,11 @@ import os
 class ModelDownloadStack(Stack):
 
     def __init__(self, scope: Construct, construct_id: str, 
-            env, project_name: str, 
+            project_name: str, 
             model_bucket_prefix:str, 
             model_bucket_key_full_name: str,
-            model_hugging_face_name: str, **kwargs) -> None:
+            model_hugging_face_name: str,
+            **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         ROOT_DIR = os.path.abspath(os.curdir)

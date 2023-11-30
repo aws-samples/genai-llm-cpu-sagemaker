@@ -11,8 +11,6 @@ class SageMakerEndpointConstruct(Construct):
         project_prefix: str,
         role_arn: str,
         model_name: str,
-        # model_bucket_name,
-        # model_bucket_key: str,
         model_repository_image: str,
         variant_name: str,
         variant_weight: int,
@@ -27,7 +25,6 @@ class SageMakerEndpointConstruct(Construct):
                            containers=[
                                sagemaker.CfnModel.ContainerDefinitionProperty(
                                         image = model_repository_image,
-                                        #model_data_url= f"s3://{model_bucket_name}/{model_bucket_key}",
                                         environment= environment
                                     )
                                ],
@@ -52,10 +49,7 @@ class SageMakerEndpointConstruct(Construct):
             self.endpoint = sagemaker.CfnEndpoint(self, f"{model_name}-Endpoint",
                                 endpoint_name= f"{project_prefix}-{model_name}-Endpoint",
                                 endpoint_config_name= config.attr_endpoint_config_name
-            )
-            
-            #CfnOutput(scope=self,id=f"{model_name}EndpointName", value=self.endpoint.endpoint_name)
-            
+            )            
             
     @property
     def endpoint_name(self) -> str:
