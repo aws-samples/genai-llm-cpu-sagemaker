@@ -33,7 +33,7 @@ class ImageBuildingStack(Stack):
         # ecr repo to push docker container into
         ecr = aws_ecr.Repository(
             self, "ECR",
-            repository_name=f"{PROJECT_NAME}-{REPOSITORY_NAME}",
+            repository_name=f"{REPOSITORY_NAME}",
             removal_policy=RemovalPolicy.DESTROY,
             auto_delete_images=True
         )
