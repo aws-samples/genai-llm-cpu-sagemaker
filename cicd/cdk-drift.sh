@@ -12,17 +12,20 @@
 # HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
+    
 #!/usr/bin/env bash
 
 if [[ $# -ge 2 ]]; then
     export CDK_DEPLOY_ACCOUNT=$1
     export CDK_DEPLOY_REGION=$2
-
     shift; shift
+    
+    
+    echo ==--------CheckCDKDifferences---------==
     source .venv/bin/activate
-    cdk deploy "$@" --require-approval never
-    exit $?
+    # Compares the specified stack and its dependencies with the deployed stacks
+    cdk diff "$@"
+
 else
     echo 1>&2 "Provide account and region as first two args."
     echo 1>&2 "Additional args are passed through to cdk deploy."

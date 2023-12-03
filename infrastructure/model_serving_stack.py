@@ -22,17 +22,24 @@ from construct.sagemaker_endpoint_construct import SageMakerEndpointConstruct
 
 class ModelServingStack(Stack):
 
-    def __init__(self, scope: Construct, construct_id: str, env, sagemaker_role_name: str, instance_type: str, model_repository_uri: str, model_bucket_name: str, model_bucket_key: str, sagemaker_model_name: str, **kwargs) -> None:
+    def __init__(self, scope: Construct, construct_id: str,
+        project_name: str, 
+        sagemaker_role_name: str, 
+        instance_type: str, 
+        model_repository_uri: str, 
+        model_bucket_name: str, 
+        sagemaker_model_name: str,
+         **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         ROLE_NAME = sagemaker_role_name
-        REGION_NAME = str(env.region)
+        PROJECT_NAME = project_name
+        REGION_NAME = self.region
 
         MODEL_BUCKET_NAME = model_bucket_name
-        MODEL_BUCKET_KEY = model_bucket_key
         MODEL_REPOSITORY_URI = model_repository_uri
 
-        INSTANCE_TYPE = instance_type # make sure you use correct instance types x86 or graviton 
+        INSTANCE_TYPE = instance_type 
 
         MODEL_NAME = sagemaker_model_name
         ENDPOINT_CONFIG_NAME = f'{MODEL_NAME}-config'
@@ -93,13 +100,11 @@ class ModelServingStack(Stack):
         sagemaker_role.attach_inline_policy(s3_policy)    
 
         endpoint = SageMakerEndpointConstruct(self, f"{MODEL_NAME}",
-                                    project_prefix = "GenerativeAiDemoLlama",
+                                    project_prefix = f"{PROJECT_NAME}",
                                     
                                     role_arn= sagemaker_role.role_arn,
 
                                     model_name = f"{MODEL_NAME}",
-                                    model_bucket_name = f"{MODEL_BUCKET_NAME}",
-                                    model_bucket_key = f"{MODEL_BUCKET_KEY}",
                                     model_repository_image = f"{MODEL_REPOSITORY_URI}:latest", #TODO do not hardcode tags
 
                                     variant_name = "AllTraffic",

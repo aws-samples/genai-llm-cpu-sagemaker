@@ -22,8 +22,8 @@ class ModelConfigurationStack(Stack):
             model_bucket_name: str, 
             sagemaker_endpoint_name:str, 
             project_name: str,
-            env, **kwargs) -> None:
-        super().__init__(scope, construct_id, env=env, **kwargs)
+            **kwargs) -> None:
+        super().__init__(scope, construct_id, **kwargs)
 
         MODEL_BUCKET_KEY_FILE = model_bucket_key
         ENDPOINT_NAME = sagemaker_endpoint_name
@@ -102,9 +102,10 @@ class ModelConfigurationStack(Stack):
             )
         )
 
-        pipeline = aws_codepipeline.Pipeline(self, 
-            f"{PROJECT_NAME}-model-configuration-pipeline"
-            )
+        # pipeline = aws_codepipeline.Pipeline(self, 
+        #     f"{PROJECT_NAME}-model-configuration-pipeline"
+        #     )
+
 
         input_artifact = aws_codepipeline.Artifact()
 
@@ -128,14 +129,17 @@ class ModelConfigurationStack(Stack):
             run_order=2        
         )
 
-        pipeline.add_stage(
-            stage_name="Source",
-            actions=[source_action]
-        )
-
-        pipeline.add_stage(
-            stage_name="StepFunctions",
-            actions=[step_function_action]
+        aws_codepipeline.Pipeline(self, "Pipeline",
+            pipeline_name=f"{PROJECT_NAME}-model-configuration-pipeline",
+            artifact_bucket=asset_bucket.bucket,
+            stages=[aws_codepipeline.StageProps(
+                stage_name="Source",
+                actions=[source_action],
+            ), aws_codepipeline.StageProps(
+                stage_name="StepFunctions",
+                actions=[step_function_action],
+            )
+            ]
         )
 
         CfnOutput(scope=self,

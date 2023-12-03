@@ -29,14 +29,15 @@ if [[ $# -ge 2 ]]; then
     export CDK_DEPLOY_ACCOUNT=$1
     export CDK_DEPLOY_REGION=$2
     shift; shift
-    npx cdk deploy ModelDownloadStack "$@" --require-approval never 
-    npx cdk deploy ImageBuildingStack "$@" --require-approval never 
+    source .venv/bin/activate
+    cdk deploy ModelDownloadStack "$@" --require-approval never 
+    cdk deploy ImageBuildingStack "$@" --require-approval never 
     echo "Wait for an image to be built and pushed to ECR..."
-    sleepwithcountdown 730
-    npx cdk deploy ModelServingStack "$@" --require-approval never 
+    sleepwithcountdown 460
+    cdk deploy ModelServingStack "$@" --require-approval never 
     echo "Wait for model to be InService..."
-    sleepwithcountdown 10
-    npx cdk deploy ModelConfigurationStack "$@" --require-approval never
+    sleepwithcountdown 5
+    cdk deploy ModelConfigurationStack "$@" --require-approval never
     exit $?
 else
     echo 1>&2 "Provide account and region as first two args."
