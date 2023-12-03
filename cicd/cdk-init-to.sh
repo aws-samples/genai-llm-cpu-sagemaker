@@ -23,14 +23,15 @@ if [[ $# -ge 2 ]]; then
     echo ==--------CheckDedendencies---------==
     aws --version
     cdk --version
-    npx cdk init app --language python "$@"
+    python3 --version
 
     echo ==--------InstallCDKDependencies---------==
-    npx source .venv/bin/activate
-    npx python -m pip install -r requirements.txt
+    python3 -m venv .venv
+    source .venv/bin/activate
+    python -m pip install -r requirements.txt
 
     echo ==--------BootstrapCDKEnvironment---------==
-    npx cdk bootstrap
+    cdk bootstrap
     exit $?
 else
     echo 1>&2 "Provide account and region as first two args."

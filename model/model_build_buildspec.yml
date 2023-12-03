@@ -16,9 +16,5 @@ phases:
       - echo Entered the build phase...
       - echo Downloading model
       - HUGGINGFACE_HUB_ENABLE_HF_TRANSFER=1 huggingface-cli download ${MODEL_HUGGING_FACE_NAME} ${MODEL_BUCKET_KEY_FULL_NAME} --local-dir . --local-dir-use-symlinks False
-      - echo Compressing file
-      - tar -czf ${MODEL_BUCKET_KEY_COMPRESSED} ${MODEL_BUCKET_KEY_FULL_NAME}
-      - echo Copying compressed file
-      - aws s3 cp ${MODEL_BUCKET_KEY_COMPRESSED} s3://${MODEL_BUCKET_NAME}/
       - echo Copying uncompressed file
       - aws s3 cp ${MODEL_BUCKET_KEY_FULL_NAME} s3://${MODEL_BUCKET_NAME}/
