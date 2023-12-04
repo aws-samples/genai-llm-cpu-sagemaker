@@ -20,6 +20,7 @@ class ModelConfigurationStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, 
             model_bucket_key: str, 
             model_bucket_name: str, 
+            sagemaker_model_name: str,
             sagemaker_endpoint_name:str, 
             project_name: str,
             **kwargs) -> None:
@@ -29,6 +30,10 @@ class ModelConfigurationStack(Stack):
         ENDPOINT_NAME = sagemaker_endpoint_name
         MODEL_BUCKET_NAME = model_bucket_name
         PROJECT_NAME = project_name
+        MODEL_NAME = sagemaker_model_name
+
+        REGION_NAME = self.region
+        ACCOUNT_ID = self.account
 
         ROOT_DIR = os.path.abspath(os.curdir)
 
@@ -89,23 +94,18 @@ class ModelConfigurationStack(Stack):
             state_json=state_json
         )
 
-        chain = aws_stepfunctions.Chain.start(custom_state) #.next(final_status)
+        chain = aws_stepfunctions.Chain.start(custom_state)
 
         state_machine = aws_stepfunctions.StateMachine(self, "SagemakerEndpointStateMachine",
-            definition=chain,
+            definition_body=aws_stepfunctions.DefinitionBody.from_chainable(chain),
             timeout=Duration.seconds(30),
         )
 
         state_machine.add_to_role_policy(statement=aws_iam.PolicyStatement(
                 actions=["sagemaker:InvokeEndpoint"],
-                resources=["*"]
+                resources=[f"arn:aws:sagemaker:{REGION_NAME}:{ACCOUNT_ID}:endpoint/*{MODEL_NAME}*"]
             )
         )
-
-        # pipeline = aws_codepipeline.Pipeline(self, 
-        #     f"{PROJECT_NAME}-model-configuration-pipeline"
-        #     )
-
 
         input_artifact = aws_codepipeline.Artifact()
 

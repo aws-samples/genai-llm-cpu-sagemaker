@@ -29,15 +29,19 @@ class ModelServingStack(Stack):
         model_repository_uri: str, 
         model_bucket_name: str, 
         sagemaker_model_name: str,
+        model_repository_name: str,
          **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         ROLE_NAME = sagemaker_role_name
         PROJECT_NAME = project_name
         REGION_NAME = self.region
+        ACCOUNT_ID = self.account
 
         MODEL_BUCKET_NAME = model_bucket_name
         MODEL_REPOSITORY_URI = model_repository_uri
+        MODEL_REPOSITORY_NAME = model_repository_name
+        MODEL_REPOSITORY_IMAGE_TAG = "latest"
 
         INSTANCE_TYPE = instance_type 
 
@@ -48,16 +52,6 @@ class ModelServingStack(Stack):
         sagemaker_role = aws_iam.Role(self, f"{ROLE_NAME}",
             assumed_by=aws_iam.ServicePrincipal("sagemaker.amazonaws.com")
         )
-
-        sts_policy = aws_iam.Policy(self, "sm-deploy-policy-sts",
-                                    statements=[aws_iam.PolicyStatement(
-                                        effect=aws_iam.Effect.ALLOW,
-                                        actions=[
-                                            "sts:AssumeRole"
-                                          ],
-                                        resources=["*"]
-                                    )]
-                                )
 
         logs_policy = aws_iam.Policy(self, "sm-deploy-policy-logs",
                                     statements=[aws_iam.PolicyStatement(
@@ -70,17 +64,29 @@ class ModelServingStack(Stack):
                                             "logs:DescribeLogStreams",
                                             "ecr:GetAuthorizationToken"
                                           ],
-                                        resources=["*"]
+                                        resources=[f"arn:aws:logs:{REGION_NAME}:{ACCOUNT_ID}:log-group:/aws/sagemaker/Endpoints/{PROJECT_NAME}-{MODEL_NAME}-Endpoint:*"]
                                     )]
                                 )
 
         ecr_policy = aws_iam.Policy(self, "sm-deploy-policy-ecr",
-                                    statements=[aws_iam.PolicyStatement(
+                                    statements=[
+                                        aws_iam.PolicyStatement(
                                         effect=aws_iam.Effect.ALLOW,
                                         actions=[
-                                            "ecr:*",
+                                            "ecr:ListTagsForResource",
+                                            "ecr:ListImages",
+                                            "ecr:DescribeRepositories",
+                                            "ecr:BatchCheckLayerAvailability",
+                                            "ecr:GetLifecyclePolicy",
+                                            "ecr:DescribeImageScanFindings",
+                                            "ecr:GetLifecyclePolicyPreview",
+                                            "ecr:GetDownloadUrlForLayer",
+                                            "ecr:BatchGetImage",
+                                            "ecr:DescribeImages",
+                                            "ecr:GetRepositoryPolicy",
+                                            "ecr:GetAuthorizationToken"
                                           ],
-                                        resources=["*"]
+                                        resources=[f"*"] # using * for resources to avoid race condition                                   
                                     )]
                                 )
         
@@ -90,11 +96,10 @@ class ModelServingStack(Stack):
                                         actions=[
                                             "s3:*",
                                           ],
-                                        resources=["*"] #TODO[f"arn:aws:s3:::{MODEL_BUCKET_NAME}/*"]
+                                        resources=[f"arn:aws:s3:::{MODEL_BUCKET_NAME}/*"]
                                     )]
                                 )
                                 
-        sagemaker_role.attach_inline_policy(sts_policy)
         sagemaker_role.attach_inline_policy(logs_policy)
         sagemaker_role.attach_inline_policy(ecr_policy)
         sagemaker_role.attach_inline_policy(s3_policy)    
@@ -105,7 +110,7 @@ class ModelServingStack(Stack):
                                     role_arn= sagemaker_role.role_arn,
 
                                     model_name = f"{MODEL_NAME}",
-                                    model_repository_image = f"{MODEL_REPOSITORY_URI}:latest", #TODO do not hardcode tags
+                                    model_repository_image = f"{MODEL_REPOSITORY_URI}:latest",
 
                                     variant_name = "AllTraffic",
                                     variant_weight = 1,
@@ -123,7 +128,6 @@ class ModelServingStack(Stack):
                                     deploy_enable = True
         )
         
-        endpoint.node.add_dependency(sts_policy)
         endpoint.node.add_dependency(logs_policy)
         endpoint.node.add_dependency(ecr_policy)
 
