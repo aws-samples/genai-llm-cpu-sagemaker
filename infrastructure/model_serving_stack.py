@@ -73,6 +73,13 @@ class ModelServingStack(Stack):
                                         aws_iam.PolicyStatement(
                                         effect=aws_iam.Effect.ALLOW,
                                         actions=[
+                                            "ecr:GetAuthorizationToken"
+                                          ],
+                                        resources=["*"]                                   
+                                    ),
+                                        aws_iam.PolicyStatement(
+                                        effect=aws_iam.Effect.ALLOW,
+                                        actions=[
                                             "ecr:ListTagsForResource",
                                             "ecr:ListImages",
                                             "ecr:DescribeRepositories",
@@ -83,10 +90,9 @@ class ModelServingStack(Stack):
                                             "ecr:GetDownloadUrlForLayer",
                                             "ecr:BatchGetImage",
                                             "ecr:DescribeImages",
-                                            "ecr:GetRepositoryPolicy",
-                                            "ecr:GetAuthorizationToken"
+                                            "ecr:GetRepositoryPolicy"
                                           ],
-                                        resources=[f"*"] # using * for resources to avoid race condition                                   
+                                        resources=[f"arn:aws:ecr:{REGION_NAME}:{ACCOUNT_ID}:repository/{MODEL_REPOSITORY_NAME}"]                              
                                     )]
                                 )
         
@@ -110,7 +116,7 @@ class ModelServingStack(Stack):
                                     role_arn= sagemaker_role.role_arn,
 
                                     model_name = f"{MODEL_NAME}",
-                                    model_repository_image = f"{MODEL_REPOSITORY_URI}:latest",
+                                    model_repository_image = f"{MODEL_REPOSITORY_URI}:{MODEL_REPOSITORY_IMAGE_TAG}",
 
                                     variant_name = "AllTraffic",
                                     variant_weight = 1,
