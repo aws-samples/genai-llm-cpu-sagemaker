@@ -47,35 +47,12 @@ class ModelConfigurationStack(Stack):
         Loading model from S3 usualy takes 20-30 seconds but depends on loading speed from S3.
         """
         
-        llama_model_args = {
-            "bucket":f"{MODEL_BUCKET_NAME}",
-            "key":f"{MODEL_BUCKET_KEY_FILE}", 
-            "n_ctx": 1024,
-            "n_parts": -1,
-            "n_gpu_layers": 0,
-            "seed": 1411,
-            "f16_kv": True,
-            "logits_all": False,
-            "vocab_only": False,
-            "use_mmap": True,
-            "use_mlock": False,
-            "embedding": False,
-            "n_threads": None,
-            "n_batch": 512,
-            "last_n_tokens_size": 64,
-            "lora_base": None,
-            "lora_path": None,
-            "low_vram": False,
-            "tensor_split": None,
-            "rope_freq_base": 10000,
-            "rope_freq_scale": 1,
-            "verbose": False,
-        }
 
         payload = {
-            'configure': True,
-            'inference': False,
-            'args': llama_model_args
+            "configure": {
+                "bucket":f"{MODEL_BUCKET_NAME}",
+                "key":f"{MODEL_BUCKET_KEY_FILE}"
+            }
         }
 
         payload_json = json.dumps(payload)

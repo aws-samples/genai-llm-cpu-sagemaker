@@ -39,7 +39,7 @@ class ImageBuildingStack(Stack):
         )
 
         standard_image = aws_codebuild.LinuxBuildImage.STANDARD_6_0
-        compute_type = aws_codebuild.ComputeType.LARGE # to decrease wait time
+        compute_type = aws_codebuild.ComputeType.X2_LARGE # to decrease wait time
 
         # codebuild project meant to run in pipeline
         codebuild_project = aws_codebuild.PipelineProject(

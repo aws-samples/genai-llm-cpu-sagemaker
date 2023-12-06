@@ -1,7 +1,6 @@
-fastapi
+flask
+asgiref
 boto3
 starlette
-llama-cpp-python
-pydantic
 uvicorn
 requests

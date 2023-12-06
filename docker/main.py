@@ -1,161 +1,210 @@
-import os
+#!/usr/bin/env python3
+import argparse
+from asgiref.wsgi import WsgiToAsgi
+from flask import Flask, jsonify, request, Response
+import urllib.parse
+import requests
+import time
 import json
 import boto3
-from fastapi import FastAPI, HTTPException
-from starlette.responses import Response
-from llama_cpp import Llama
-from pydantic import BaseModel, validator
-from typing import Dict, Optional
-from typing import Optional, List, Union
-from pathlib import Path
+import os
+import subprocess
 import traceback
-import requests
-from urllib.parse import urlparse
 
 
-MODELPATH=os.environ.get('MODELPATH')
-STAGE = os.environ.get('STAGE', None)
-OPENAPI_PREFIX = f"/{STAGE}" if STAGE else "/"
+app = Flask(__name__)
+slot_id = -1
 
-app = FastAPI(title="Sagemaker Endpoint LLM API", openapi_prefix=OPENAPI_PREFIX)
-llm = None #What we're going to do here is set up a simple system that allows you to specify any llama.cpp model you'd like. #Llama(model_path=MODELPATH, verbose=False)  # Instantiate the model at the beginning to make responses faster
+parser = argparse.ArgumentParser(description="An example of using server.cpp with a similar API to OAI. It must be used together with server.cpp.")
+parser.add_argument("--chat-prompt", type=str, help="the top prompt in chat completions(default: 'A chat between a curious user and an artificial intelligence assistant. The assistant follows the given rules no matter what.\\n')", default='A chat between a curious user and an artificial intelligence assistant. The assistant follows the given rules no matter what.\\n')
+parser.add_argument("--user-name", type=str, help="USER name in chat completions(default: '\\nUSER: ')", default="\\nUSER: ")
+parser.add_argument("--ai-name", type=str, help="ASSISTANT name in chat completions(default: '\\nASSISTANT: ')", default="\\nASSISTANT: ")
+parser.add_argument("--system-name", type=str, help="SYSTEM name in chat completions(default: '\\nASSISTANT's RULE: ')", default="\\nASSISTANT's RULE: ")
+parser.add_argument("--stop", type=str, help="the end of response in chat completions(default: '</s>')", default="</s>")
+parser.add_argument("--llama-api", type=str, help="Set the address of server.cpp in llama.cpp(default: http://127.0.0.1:8081)", default='http://127.0.0.1:8081')
+parser.add_argument("--api-key", type=str, help="Set the api key to allow only few user(default: NULL)", default="")
+parser.add_argument("--host", type=str, help="Set the ip address to listen.(default: 127.0.0.1)", default='127.0.0.1')
+parser.add_argument("--port", type=int, help="Set the port to listen.(default: 8080)", default=8080)
 
-class LlamaModelConfig(BaseModel):
-    model_path: Optional[str] = None
-    bucket: Optional[str] = None
-    key: Optional[str] = None
-    n_ctx: int = 512
-    n_parts: int = -1
-    n_gpu_layers: int = 0
-    seed: int = 1337
-    f16_kv: bool = True
-    logits_all: bool = False
-    vocab_only: bool = False
-    use_mmap: bool = True
-    use_mlock: bool = False
-    embedding: bool = False
-    n_threads: Optional[int] = None
-    n_batch: int = 512
-    last_n_tokens_size: int = 64
-    lora_base: Optional[str] = None
-    lora_path: Optional[str] = None
-    low_vram: bool = False
-    tensor_split: Optional[List[float]] = None
-    rope_freq_base: float = 10000
-    rope_freq_scale: float = 1
-    verbose: bool = False
+args, unknown = parser.parse_known_args()
 
-    @validator('tensor_split')
-    def validate_tensor_split(cls, v):
-        if v is not None and not all(isinstance(item, float) for item in v):
-            raise ValueError('All elements in the tensor_split list must be floats')
-        return v
-
-class RoutePayload(BaseModel):
-    configure: bool
-    inference: bool
-    args: dict
-
-
-class LlamaArguments(BaseModel):
-    prompt: str
-    suffix: Optional[str] = None
-    max_tokens: int = 128
-    temperature: float = 0.7
-    top_p: float = 0.95
-    logprobs: Optional[Union[int, None]] = None
-    echo: bool = False
-    stop: Optional[Union[str, List[str], None]] = []
-    frequency_penalty: float = 0
-    presence_penalty: float = 0
-    repeat_penalty: float = 1.1
-    top_k: int = 40
-    stream: bool = False
-    tfs_z: float = 1
-    mirostat_mode: int = 0
-    mirostat_tau: float = 5
-    mirostat_eta: float = 0.1
-    model: Optional[str] = None
-
-    @validator('stop')
-    def validate_stop(cls, v):
-        if isinstance(v, list) and not all(isinstance(item, str) for item in v):
-            raise ValueError('All elements in the stop list must be strings')
-        return v
-
-
-def download_from_s3(bucket: str, key: str, local_path: str):
-    s3 = boto3.client('s3')
-    s3.download_file(bucket, key, local_path)
-
-def download_file(url, local_filename):
-    response = requests.get(url, stream=True)
-    response.raise_for_status()  # Ensure we got an OK response
-
-    with open(local_filename, 'wb') as f:
-        for chunk in response.iter_content(chunk_size=8192):
-            f.write(chunk)
-
-def is_url(path):
+def is_present(json, key):
     try:
-        result = urlparse(path)
-        return all([result.scheme, result.netloc])
-    except ValueError:
+        buf = json[key]
+    except KeyError:
+        return False
+    if json[key] == None:
+        return False
+    return True
+
+#convert chat to prompt
+def convert_chat(messages):
+    prompt = "" + args.chat_prompt.replace("\\n", "\n")
+
+    system_n = args.system_name.replace("\\n", "\n")
+    user_n = args.user_name.replace("\\n", "\n")
+    ai_n = args.ai_name.replace("\\n", "\n")
+    stop = args.stop.replace("\\n", "\n")
+
+
+    for line in messages:
+        if (line["role"] == "system"):
+            prompt += f"{system_n}{line['content']}"
+        if (line["role"] == "user"):
+            prompt += f"{user_n}{line['content']}"
+        if (line["role"] == "assistant"):
+            prompt += f"{ai_n}{line['content']}{stop}"
+    prompt += ai_n.rstrip()
+
+    return prompt
+
+def make_postData(body, chat=False, stream=False):
+    postData = {}
+    if (chat):
+        postData["prompt"] = convert_chat(body["messages"])
+    else:
+        postData["prompt"] = body["prompt"]
+    if(is_present(body, "temperature")): postData["temperature"] = body["temperature"]
+    if(is_present(body, "top_k")): postData["top_k"] = body["top_k"]
+    if(is_present(body, "top_p")): postData["top_p"] = body["top_p"]
+    if(is_present(body, "max_tokens")): postData["n_predict"] = body["max_tokens"]
+    if(is_present(body, "presence_penalty")): postData["presence_penalty"] = body["presence_penalty"]
+    if(is_present(body, "frequency_penalty")): postData["frequency_penalty"] = body["frequency_penalty"]
+    if(is_present(body, "repeat_penalty")): postData["repeat_penalty"] = body["repeat_penalty"]
+    if(is_present(body, "mirostat")): postData["mirostat"] = body["mirostat"]
+    if(is_present(body, "mirostat_tau")): postData["mirostat_tau"] = body["mirostat_tau"]
+    if(is_present(body, "mirostat_eta")): postData["mirostat_eta"] = body["mirostat_eta"]
+    if(is_present(body, "seed")): postData["seed"] = body["seed"]
+    if(is_present(body, "logit_bias")): postData["logit_bias"] = [[int(token), body["logit_bias"][token]] for token in body["logit_bias"].keys()]
+    if (args.stop != ""):
+        postData["stop"] = [args.stop]
+    else:
+        postData["stop"] = []
+    if(is_present(body, "stop")): postData["stop"] += body["stop"]
+    postData["n_keep"] = -1
+    postData["stream"] = stream
+    postData["cache_prompt"] = True
+    postData["slot_id"] = slot_id
+    return postData
+
+def make_resData(data, chat=False, promptToken=[]):
+    resData = {
+        "id": "chatcmpl" if (chat) else "cmpl",
+        "object": "chat.completion" if (chat) else "text_completion",
+        "created": int(time.time()),
+        "truncated": data["truncated"],
+        "model": "LLaMA_CPP",
+        "usage": {
+            "prompt_tokens": data["tokens_evaluated"],
+            "completion_tokens": data["tokens_predicted"],
+            "total_tokens": data["tokens_evaluated"] + data["tokens_predicted"]
+        }
+    }
+    if (len(promptToken) != 0):
+        resData["promptToken"] = promptToken
+    if (chat):
+        #only one choice is supported
+        resData["choices"] = [{
+            "index": 0,
+            "message": {
+                "role": "assistant",
+                "content": data["content"],
+            },
+            "finish_reason": "stop" if (data["stopped_eos"] or data["stopped_word"]) else "length"
+        }]
+    else:
+        #only one choice is supported
+        resData["choices"] = [{
+            "text": data["content"],
+            "index": 0,
+            "logprobs": None,
+            "finish_reason": "stop" if (data["stopped_eos"] or data["stopped_word"]) else "length"
+        }]
+    return resData
+
+def make_resData_stream(data, chat=False, time_now = 0, start=False):
+    resData = {
+        "id": "chatcmpl" if (chat) else "cmpl",
+        "object": "chat.completion.chunk" if (chat) else "text_completion.chunk",
+        "created": time_now,
+        "model": "LLaMA_CPP",
+        "choices": [
+            {
+                "finish_reason": None,
+                "index": 0
+            }
+        ]
+    }
+    slot_id = data["slot_id"]
+    if (chat):
+        if (start):
+            resData["choices"][0]["delta"] =  {
+                "role": "assistant"
+            }
+        else:
+            resData["choices"][0]["delta"] =  {
+                "content": data["content"]
+            }
+            if (data["stop"]):
+                resData["choices"][0]["finish_reason"] = "stop" if (data["stopped_eos"] or data["stopped_word"]) else "length"
+    else:
+        resData["choices"][0]["text"] = data["content"]
+        if (data["stop"]):
+            resData["choices"][0]["finish_reason"] = "stop" if (data["stopped_eos"] or data["stopped_word"]) else "length"
+
+    return resData
+
+def update_model(bucket, key):
+    try:
+        s3 = boto3.client('s3')
+        s3.download_file(bucket, key, os.environ.get('MODELPATH'))
+        subprocess.run(["/app/server.sh", os.environ.get('MODELPATH')])
+        return True
+    except Exception as e:
+        print(e)
+        print(str(traceback.format_exc()))
         return False
 
+@app.route('/ping', methods=['GET'])
+def ping():
+    return Response(status=200)
 
-@app.post("/invocations")
-@app.post("/")
-async def route(payload: RoutePayload):
-    if payload.configure:
-        llama_model_args = LlamaModelConfig(**payload.args)
-        return await configure(llama_model_args)
-    elif payload.inference:
-        llama_args = LlamaArguments(**payload.args)
-        return await invoke(llama_args)
+@app.route("/invocations", methods=['POST'])
+def completion():
+    if (args.api_key != "" and request.headers["Authorization"].split()[1] != args.api_key):
+        return Response(status=403)
+    body = request.get_json()
+    stream = False
+    tokenize = False
+    if (is_present(body, "configure")): 
+        res = update_model(body["configure"]["bucket"], body["configure"]["key"])
+        return Response(status=200) if (res) else Response(status=500)
+    if(is_present(body, "stream")): stream = body["stream"]
+    if(is_present(body, "tokenize")): tokenize = body["tokenize"]
+    postData = make_postData(body, chat=False, stream=stream)
+
+    promptToken = []
+    if (tokenize):
+        tokenData = requests.request("POST", urllib.parse.urljoin(args.llama_api, "/tokenize"), data=json.dumps({"content": postData["prompt"]})).json()
+        promptToken = tokenData["tokens"]
+
+    if (not stream):
+        data = requests.request("POST", urllib.parse.urljoin(args.llama_api, "/completion"), data=json.dumps(postData))
+        print(data.json())
+        resData = make_resData(data.json(), chat=False, promptToken=promptToken)
+        return jsonify(resData)
     else:
-        raise HTTPException(status_code=400, detail="Please specify either 'configure' or 'inference'")
+        def generate():
+            data = requests.request("POST", urllib.parse.urljoin(args.llama_api, "/completion"), data=json.dumps(postData), stream=True)
+            time_now = int(time.time())
+            for line in data.iter_lines():
+                if line:
+                    decoded_line = line.decode('utf-8')
+                    resData = make_resData_stream(json.loads(decoded_line[6:]), chat=False, time_now=time_now)
+                    yield 'data: {}\n'.format(json.dumps(resData))
+        return Response(generate(), mimetype='text/event-stream')
 
+asgi_app = WsgiToAsgi(app)
 
-
-@app.get("/ping")
-async def ping():
-    return Response(status_code=200)
-
-
-@app.post("/invoke")
-async def invoke(llama_args: LlamaArguments):
-    try:
-        if llm is not None:
-            output = llm(**llama_args.dict())  # Pass the parameters to Llama by unpacking the dictionary of arguments
-        else:
-            raise HTTPException(status_code=400, detail="Please configure the llm engine using /configure")
-    except:
-        output={"traceback_err":str(traceback.format_exc())}
-    return output
-
-@app.post("/configure")
-async def configure(llama_model_args: LlamaModelConfig):
-    try:
-        finalargs={}
-        if llama_model_args.bucket and llama_model_args.key:
-            local_path = MODELPATH
-            download_from_s3(llama_model_args.bucket, llama_model_args.key, local_path)
-            llama_model_args.model_path = local_path            
-        if llama_model_args.model_path:
-            if is_url(llama_model_args.model_path):
-                download_file(llama_model_args.model_path,MODELPATH)
-                llama_model_args.model_path=MODELPATH
-        elif not llama_model_args.model_path:
-            raise HTTPException(status_code=400, detail="Model path must be provided when S3 bucket and key are not specified")
-        finalargs=llama_model_args.dict()
-        finalargs.pop('key',None)
-        finalargs.pop('bucket',None)
-        llama_model_args=None
-        llama_model_args = finalargs
-        global llm
-        llm = Llama(**llama_model_args)  # Pass the parameters to Llama by unpacking the dictionary of arguments
-        return {"status": "success"}
-    except:
-        return {"traceback_err":str(traceback.format_exc())}
-
+#if __name__ == '__main__':
+#    app.run(args.host, port=args.port)
