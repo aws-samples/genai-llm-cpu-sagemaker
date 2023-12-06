@@ -62,6 +62,7 @@ modelServingStack = ModelServingStack(app,
     model_repository_uri=cdk.Fn.import_value("var-modelrepositoryuri"), 
     model_bucket_name=cdk.Fn.import_value("var-modelbucketname"), 
     sagemaker_model_name=sagemaker_model_name,
+    model_repository_name=image_repository_name, 
     )
 
 modelServingStack.add_dependency(imageBuildingStack)
@@ -71,6 +72,7 @@ modelConfigurationStack = ModelConfigurationStack(app,
     "ModelConfigurationStack",
     env=environment,
     project_name=project_name, 
+    sagemaker_model_name=sagemaker_model_name,
     model_bucket_key=model_bucket_key_full_name,
     model_bucket_name=cdk.Fn.import_value("var-modelbucketname"),
     sagemaker_endpoint_name=cdk.Fn.import_value("var-sagemakerendpointname"),
