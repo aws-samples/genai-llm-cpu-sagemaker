@@ -38,16 +38,16 @@ To add additional dependencies, for example other CDK libraries, add them to you
 
 ## To Create Resources / Deploy Stacks
 
-To deploy all stacks: \
+To deploy all stacks you can use `cdk-deploy-all-to` script: \
 `./cicd/cdk-deploy-all-to.sh <account-id> <region-name>` 
 
 For example: \
 `./cicd/cdk-deploy-all-to.sh 012345678901 us-east-1` 
 
-To deploy one stack: \
+To deploy a single stack you can use `cdk-deploy-stack-to` script with an additional stack name as a parameter: \
 `./cicd/cdk-deploy-stack-to.sh <account-id> <region-name> ModelDownloadStack` 
 
-To check application drift, and compare specified stack and its dependencies with the deployed stack: \
+To check application drift, and compare specified stack and its dependencies with the deployed stack, you can use `cdk-drift` script (with optional -v for verbose output): \
 `./cicd/cdk-drift.sh <account-id> <region-name> -v` 
 
 ## To Destroy Resources / Clean-up
@@ -69,7 +69,7 @@ Only changing a model does not require rebuidling an image, and would take appro
     * model_full_name         - set Hugging Face file full name e.g. "llama-2-7b-chat.Q4_K_M.gguf"
 
 3. Run a script to destroy previously used model's S3 bucket, Sagemaker configuration and endpoint and re-create new model resources: \
-`./cicd/cdk-change-model.sh <account-id> <region-name> ModelConfigurationStack` 
+`./cicd/cdk-change-model.sh <account-id> <region-name>` 
 > You will be prompted with a question: `This action would destroy your current deployment. Are you sure that you want to proceed?`, type Y to confirm. 
 
 ### Credits
