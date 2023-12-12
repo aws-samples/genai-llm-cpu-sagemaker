@@ -18,9 +18,9 @@ AWS CDK app configuration file values are in `app-config.ini`:
 | model.model_full_name | [HuggingFace](https://huggingface.co) model file full name | llama-2-7b-chat.Q4_K_M.gguf |
 | image.image_repository_name | Named of ECR repository containing model image | my-model-image-repository |
 | image.platform | Platfrom used to run inference and build an image; Values: ["ARM", "AMD"]  | ARM |
-| image.image_tag | Tag used to tag the image; | "latest" |
+| image.image_tag | Tag used to tag the image; | latest |
 | inference.sagemaker_role_name | SageMaker IAM role name | my-sagemaker-execution-role |
-| inference.sagemaker_model_name | SageMaker endpoint name for model inference | "llama-2-7b-chat" |
+| inference.sagemaker_model_name | SageMaker endpoint name for model inference | llama-2-7b-chat |
 | inference.instance_type | Instance type used for SageMaker Endpoint | "ml.c7g.2xlarge" for ARM platform or "ml.g5.xlarge" for AMD platform |
 
 
@@ -40,7 +40,7 @@ Use the following init script on MacOS and Linux or manually create and activate
 
 To add additional dependencies, for example other CDK libraries, add them to your `setup.py` file and rerun the `pip install -r requirements.txt` command.
 
-## CDDK deployment 
+## CDK deployment 
 ### To Create Resources / Deploy Stacks
 
 To deploy all stacks you can use `cdk-deploy-all-to` script: \
@@ -94,7 +94,7 @@ Only changing a model does not require rebuidling an image, and would take appro
 
 ## Inference
 
-1. Create input payload with your prompt text:
+1. Create input payload using your prompt text:
 ```python
 payload = {
     "prompt": "Give concise answer to the question. Qiestion: How to define optimal shard size in Amazon Opensearch?",
