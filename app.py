@@ -9,6 +9,8 @@ from infrastructure.model_configuration_stack import ModelConfigurationStack
 
 from configparser import ConfigParser
 
+from cdk_nag import AwsSolutionsChecks, NagSuppressions, NagPackSuppression
+
 ### Set environment
 environment=cdk.Environment(
     account=os.environ["CDK_DEFAULT_ACCOUNT"],
@@ -92,5 +94,30 @@ modelConfigurationStack = ModelConfigurationStack(app,
 
 modelConfigurationStack.add_dependency(imageBuildingStack)
 modelConfigurationStack.add_dependency(modelDownloadStack)
+
+# tags
+tags = {
+   "SolutionName": "LlamacppSagemakerEndpoint",
+   "SolutionVersion": "v1.0.0",
+   "SolutionIaC": "CDK v2"
+}
+
+for key, val in tags.items():
+    cdk.Tags.of(app).add(key,val)
+
+# cdk-nag checks
+nag_suppressions = [
+    # {"id":"AwsSolutions-IAM5", "reason":"SageMaker policy need to have access to all objects in S3 bucket"},
+]
+
+for supression in nag_suppressions:
+    NagSuppressions.add_stack_suppressions(modelServingStack, [
+        NagPackSuppression(
+            id=supression["id"],
+            reason=supression["reason"]
+        )
+    ])
+
+#cdk.Aspects.of(app).add(AwsSolutionsChecks(verbose=True))
 
 app.synth()
