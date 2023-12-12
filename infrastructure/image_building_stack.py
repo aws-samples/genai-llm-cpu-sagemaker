@@ -17,13 +17,17 @@ class ImageBuildingStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, 
         project_name: str, 
         repository_name: str, 
-        model_bucket_name: str, 
+        model_bucket_name: str,
+        platform: str, 
+        image_tag: str,
         **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         PROJECT_NAME = project_name
         REPOSITORY_NAME = repository_name
         MODEL_BUCKET_NAME = model_bucket_name
+        PLATFORM = platform
+        IMAGE_TAG = image_tag
         ROOT_DIR = os.path.abspath(os.curdir)
 
         asset_bucket = aws_s3_assets.Asset(self, "DockerAssets",
@@ -41,12 +45,19 @@ class ImageBuildingStack(Stack):
         standard_image = aws_codebuild.LinuxBuildImage.STANDARD_6_0
         compute_type = aws_codebuild.ComputeType.X2_LARGE # to decrease wait time
 
+        build_spec = "docker_build_buildspec.yml"
+        # if platform == "arm":
+        #     build_spec = "docker_build_buildspec-arm.yml"
+        # elif platform == "amd":
+        #     build_spec = "docker_build_buildspec-amd.yml"
+
+
         # codebuild project meant to run in pipeline
         codebuild_project = aws_codebuild.PipelineProject(
             self, "PipelineProject",
             project_name=f"{PROJECT_NAME}-image-building-pipeline",
             build_spec=aws_codebuild.BuildSpec.from_source_filename(
-                filename='docker_build_buildspec.yml'),
+                filename=build_spec),
             environment=aws_codebuild.BuildEnvironment(
                 privileged=True,
                 build_image=standard_image,
@@ -57,6 +68,8 @@ class ImageBuildingStack(Stack):
                 "CDK_DEPLOY_ACCOUNT": aws_codebuild.BuildEnvironmentVariable(value=os.getenv('CDK_DEPLOY_ACCOUNT') or ""),
                 "CDK_DEPLOY_REGION": aws_codebuild.BuildEnvironmentVariable(value=os.getenv('CDK_DEPLOY_REGION') or ""),
                 "REPOSITORY_NAME": aws_codebuild.BuildEnvironmentVariable(value=f"{REPOSITORY_NAME}"),
+                "PLATFORM": aws_codebuild.BuildEnvironmentVariable(value=f"{PLATFORM}"),
+                "IMAGE_TAG": aws_codebuild.BuildEnvironmentVariable(value=f"{IMAGE_TAG}"),
                 "ECR": aws_codebuild.BuildEnvironmentVariable(
                     value=ecr.repository_uri),
                 "TAG": aws_codebuild.BuildEnvironmentVariable(
@@ -107,6 +120,12 @@ class ImageBuildingStack(Stack):
             id="image_repository_uri", 
             value=ecr.repository_uri, 
             export_name="var-modelrepositoryuri"
+            )
+        
+        CfnOutput(scope=self,
+            id="image_tag", 
+            value=IMAGE_TAG, 
+            export_name="var-imagetag"
             )
 
 
