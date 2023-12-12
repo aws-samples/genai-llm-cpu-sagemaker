@@ -17,8 +17,12 @@ AWS CDK app configuration file values are in `app-config.ini`:
 | model.model_hugging_face_name | [HuggingFace](https://huggingface.co) model name | TheBloke/Llama-2-7b-Chat-GGUF |
 | model.model_full_name | [HuggingFace](https://huggingface.co) model file full name | llama-2-7b-chat.Q4_K_M.gguf |
 | image.image_repository_name | Named of ECR repository containing model image | my-model-image-repository |
+| image.platform | Platfrom used to run inference and build an image; Values: ["ARM", "AMD"]  | ARM |
+| image.image_tag | Tag used to tag the image; | "latest" |
 | inference.sagemaker_role_name | SageMaker IAM role name | my-sagemaker-execution-role |
-| inference.instance_type | Instance type used for SageMaker Endpoint | ml.c7g.2xlarge |
+| inference.sagemaker_model_name | SageMaker endpoint name for model inference | "llama-2-7b-chat" |
+| inference.instance_type | Instance type used for SageMaker Endpoint | "ml.c7g.2xlarge" for ARM platform or "ml.g5.xlarge" for AMD platform |
+
 
 The project consists of the following stacks in `./infrastructure` directory:
 * **ModelDownloadStack**      - downloads model files to an object store, it creates AWS CodePipeline and Simple Storage Service (S3) bucket
@@ -36,7 +40,8 @@ Use the following init script on MacOS and Linux or manually create and activate
 
 To add additional dependencies, for example other CDK libraries, add them to your `setup.py` file and rerun the `pip install -r requirements.txt` command.
 
-## To Create Resources / Deploy Stacks
+## CDDK deployment 
+### To Create Resources / Deploy Stacks
 
 To deploy all stacks you can use `cdk-deploy-all-to` script: \
 `./cicd/cdk-deploy-all-to.sh <account-id> <region-name>` 
@@ -50,7 +55,7 @@ To deploy a single stack you can use `cdk-deploy-stack-to` script with an additi
 To check application drift, and compare specified stack and its dependencies with the deployed stack, you can use `cdk-drift` script (with optional -v for verbose output): \
 `./cicd/cdk-drift.sh <account-id> <region-name> -v` 
 
-## To Destroy Resources / Clean-up
+### To Destroy Resources / Clean-up
 
 Use destroy script to remove all stacks: \
 `./cicd/cdk-undeploy-from.sh <account-id> <region-name> --all` 
@@ -58,7 +63,7 @@ Use destroy script to remove all stacks: \
 Or use destroy script to remove a single stack: \
 `./cicd/cdk-undeploy-from.sh <account-id> <region-name> ModelServingStack` 
 
-## Model Selection / Change
+### Model Selection / Change
 
 Only changing a model does not require rebuidling an image, and would take approximatelly 30% less time than redeploying the whole application. You can use the following process:
 
@@ -71,6 +76,47 @@ Only changing a model does not require rebuidling an image, and would take appro
 3. Run a script to destroy previously used model's S3 bucket, Sagemaker configuration and endpoint and re-create new model resources: \
 `./cicd/cdk-change-model.sh <account-id> <region-name>` 
 > You will be prompted with a question: `This action would destroy your current deployment. Are you sure that you want to proceed?`, type Y to confirm. 
+
+### Platform Selection / Change
+
+1. Update values of the variables in `app-config.ini` to use the different platform:
+    * platform      - set platform (not case sensitive) e.g. "AMD"
+    * instance_type - set instance type that matches platform e.g. "ml.g5.xlarge"
+    * image_tag     - (optional) update image tag e.g. "amd-latest"
+
+2. Destroy existing SageMaker endpoint
+`./cicd/cdk-undeploy-from.sh <account-id> <region-name> ModelConfigurationStack`
+`./cicd/cdk-undeploy-from.sh <account-id> <region-name> ModelServingStack` 
+
+3. Build a new image and create new SageMaker endpoint
+`./cicd/cdk-deploy-stack-to.sh <account-id> <region-name> ImageBuildingStack` 
+`./cicd/cdk-deploy-stack-to.sh <account-id> <region-name> ModelServingStack, ModelConfigurationStack` 
+
+## Inference
+
+1. Create input payload with your prompt text:
+```json
+payload = {
+    "prompt": "Give concise answer to the question. Qiestion: How to define optimal shard size in Amazon Opensearch?",
+    "max_tokens": 128,
+    "temperature": 0.1,
+    "top_p": 0.5
+}
+```
+
+2. Invoke SageMaker endpoint, using the stack output `ModelServingStack.sagemakerendpointname` as `ENDPOINT_NAME`:
+```python
+response = sagemaker_runtime.invoke_endpoint(
+        EndpointName=ENDPOINT_NAME,
+        Body=json.dumps(payload),
+        ContentType='application/json',
+    )
+```
+
+3. Get response body:
+```python 
+response_body = response['Body'].read().decode()
+```
 
 ### Credits
 
