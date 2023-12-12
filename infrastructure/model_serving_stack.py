@@ -30,6 +30,7 @@ class ModelServingStack(Stack):
         model_bucket_name: str, 
         sagemaker_model_name: str,
         model_repository_name: str,
+        image_tag: str,
          **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
@@ -41,7 +42,7 @@ class ModelServingStack(Stack):
         MODEL_BUCKET_NAME = model_bucket_name
         MODEL_REPOSITORY_URI = model_repository_uri
         MODEL_REPOSITORY_NAME = model_repository_name
-        MODEL_REPOSITORY_IMAGE_TAG = "latest"
+        MODEL_REPOSITORY_IMAGE_TAG = image_tag
 
         INSTANCE_TYPE = instance_type 
 

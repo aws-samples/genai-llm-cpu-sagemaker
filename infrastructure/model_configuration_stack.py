@@ -11,7 +11,6 @@ from aws_cdk import (
 )
 from constructs import Construct
 
-import boto3
 import json
 import os
 
@@ -46,7 +45,6 @@ class ModelConfigurationStack(Stack):
         Execute this cell each time you want to load a new model into the endpoint without having to redeploy anything. 
         Loading model from S3 usualy takes 20-30 seconds but depends on loading speed from S3.
         """
-        
 
         payload = {
             "configure": {
@@ -62,6 +60,7 @@ class ModelConfigurationStack(Stack):
             "End": True,
             "Parameters": {
                 "Body.$": aws_stepfunctions.JsonPath.string_to_json(str(payload_json)),
+                "ContentType": "application/json",
                 "EndpointName": ENDPOINT_NAME
             },
             "Resource": "arn:aws:states:::aws-sdk:sagemakerruntime:invokeEndpoint",
