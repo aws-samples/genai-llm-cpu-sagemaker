@@ -32,16 +32,16 @@ if [[ $# -ge 2 ]]; then
     source .venv/bin/activate
     cdk deploy ModelDownloadStack "$@" --require-approval never 
     cdk deploy ImageBuildingStack "$@" --require-approval never 
-    echo "Wait for an image to be built and pushed to ECR..."
-    sleepwithcountdown 460
+    echo "[INFO] Wait for an image to be built and pushed to ECR..."
+    sleepwithcountdown 180
     cdk deploy ModelServingStack "$@" --require-approval never 
-    echo "Wait for model to be InService..."
+    echo "[INFO] Wait for SageMaker model to be InService..."
     sleepwithcountdown 5
     cdk deploy ModelConfigurationStack "$@" --require-approval never
     exit $?
 else
-    echo 1>&2 "Provide account and region as first two args."
-    echo 1>&2 "Additional args are passed through to cdk deploy."
+    echo 1>&2 "[ERROR] Provide account and region as first two args."
+    echo 1>&2 "[ERROR] Additional args are passed through to cdk deploy."
     exit 1
 fi
 
