@@ -24,7 +24,7 @@ if [[ $# -ge 3 ]]; then
     cdk deploy "$@" --require-approval never
     exit $?
 else
-    echo 1>&2 "Provide account and region as first two args, and stack to be deployed as 3rd arg (or use --all)."
-    echo 1>&2 "Additional args are passed through to cdk deploy."
+    echo 1>&2 "[ERROR] Provide account and region as first two args, and stack to be deployed as 3rd arg (or use --all)."
+    echo 1>&2 "[ERROR] Additional args are passed through to cdk deploy."
     exit 1
 fi
