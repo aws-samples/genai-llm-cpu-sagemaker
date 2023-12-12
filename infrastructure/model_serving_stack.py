@@ -101,7 +101,12 @@ class ModelServingStack(Stack):
                                     statements=[aws_iam.PolicyStatement(
                                         effect=aws_iam.Effect.ALLOW,
                                         actions=[
-                                            "s3:*",
+                                            "s3:ListBucket",
+                                            "s3:GetObject",
+                                            "s3:ListBucket",
+                                            "s3:ListBucketVersions",
+                                            "s3:GetBucketPolicy",
+                                            "s3:GetBucketAcl",
                                           ],
                                         resources=[f"arn:aws:s3:::{MODEL_BUCKET_NAME}/*"]
                                     )]
