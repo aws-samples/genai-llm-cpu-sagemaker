@@ -95,7 +95,7 @@ Only changing a model does not require rebuidling an image, and would take appro
 ## Inference
 
 1. Create input payload with your prompt text:
-```json
+```python
 payload = {
     "prompt": "Give concise answer to the question. Qiestion: How to define optimal shard size in Amazon Opensearch?",
     "max_tokens": 128,
