@@ -1,4 +1,4 @@
-FROM ghcr.io/ggerganov/llama.cpp:full
+FROM public.ecr.aws/y0d1u8z0/llamacpp:arm64
 
 # Sets dumping log messages directly to stream instead of buffering
 ENV PYTHONUNBUFFERED=1
