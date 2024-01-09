@@ -7,6 +7,7 @@ from aws_cdk import (
     aws_codebuild,
     aws_codepipeline,
     aws_codepipeline_actions,
+    aws_kms,
     App, Aws, CfnOutput, Duration, RemovalPolicy, Stack, CustomResource
 )
 import os
@@ -42,16 +43,16 @@ class ImageBuildingStack(Stack):
             auto_delete_images=True
         )
 
+        # Create an AWS managed KMS key
+        kms_key = aws_kms.Key(self, 'ImageCodeBuildKMSKey',
+            #alias='ImageCodeBuildKMSKeyAlias',
+            enable_key_rotation=True,
+            description='Managed key for AWS CodeBuild')
+
         standard_image = aws_codebuild.LinuxBuildImage.STANDARD_6_0
         compute_type = aws_codebuild.ComputeType.X2_LARGE # to decrease wait time
-
         build_spec = "docker_build_buildspec.yml"
-        # if platform == "arm":
-        #     build_spec = "docker_build_buildspec-arm.yml"
-        # elif platform == "amd":
-        #     build_spec = "docker_build_buildspec-amd.yml"
-
-
+ 
         # codebuild project meant to run in pipeline
         codebuild_project = aws_codebuild.PipelineProject(
             self, "PipelineProject",
@@ -75,6 +76,7 @@ class ImageBuildingStack(Stack):
                 "TAG": aws_codebuild.BuildEnvironmentVariable(
                     value='cdk')
             },
+            encryption_key=kms_key,
             description='Pipeline to build and push images to container registry',
             timeout=Duration.minutes(60),
         )

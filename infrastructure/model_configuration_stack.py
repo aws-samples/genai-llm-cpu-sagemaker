@@ -7,7 +7,8 @@ from aws_cdk import (
     aws_codepipeline,
     aws_codepipeline_actions,
     aws_iam,
-    aws_s3_assets
+    aws_s3_assets,
+    aws_logs
 )
 from constructs import Construct
 
@@ -72,9 +73,15 @@ class ModelConfigurationStack(Stack):
 
         chain = aws_stepfunctions.Chain.start(custom_state)
 
+        log_group = aws_logs.LogGroup(self, "SagemakerEndpointStateMachineLogGroup")
+
         state_machine = aws_stepfunctions.StateMachine(self, "SagemakerEndpointStateMachine",
             definition_body=aws_stepfunctions.DefinitionBody.from_chainable(chain),
             timeout=Duration.seconds(30),
+            tracing_enabled=True,
+            logs=aws_stepfunctions.LogOptions(
+                destination=log_group,
+                level=aws_stepfunctions.LogLevel.ALL)
         )
 
         state_machine.add_to_role_policy(statement=aws_iam.PolicyStatement(

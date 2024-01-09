@@ -3,10 +3,12 @@
 This code demonstrates how you can run Large Language Models (LLMs) on CPU-only instances including Graviton. We are using [Llama.cpp project](https://github.com/ggerganov/llama.cpp) and exposing an Sagemaker endpoint API for inference. Models are downloaded from [Hugging Face model hub](https://huggingface.co/models).
 The project can be deployed to be compatible to both ARM64 and x86 architectures. 
 
-## Project overview
+## Project Overview
 
 This project is built by using [AWS Cloud Development Kit](https://aws.amazon.com/cdk/)(AWS CDK)  with Python.
 The `cdk.json` file tells the CDK Toolkit how to execute your app.
+
+### Configuration
 
 AWS CDK app configuration file values are in `app-config.ini`:
 
@@ -18,17 +20,22 @@ AWS CDK app configuration file values are in `app-config.ini`:
 | model.model_full_name | [HuggingFace](https://huggingface.co) model file full name | llama-2-7b-chat.Q4_K_M.gguf |
 | image.image_repository_name | Named of ECR repository containing model image | my-model-image-repository |
 | image.platform | Platfrom used to run inference and build an image; Values: ["ARM", "AMD"]  | ARM |
-| image.image_tag | Tag used to tag the image; | "latest" |
+| image.image_tag | Tag used to tag the image; | latest |
 | inference.sagemaker_role_name | SageMaker IAM role name | my-sagemaker-execution-role |
-| inference.sagemaker_model_name | SageMaker endpoint name for model inference | "llama-2-7b-chat" |
+| inference.sagemaker_model_name | SageMaker endpoint name for model inference | llama-2-7b-chat |
 | inference.instance_type | Instance type used for SageMaker Endpoint | "ml.c7g.2xlarge" for ARM platform or "ml.g5.xlarge" for AMD platform |
 
+### Architecture
 
-The project consists of the following stacks in `./infrastructure` directory:
-* **ModelDownloadStack**      - downloads model files to an object store, it creates AWS CodePipeline and Simple Storage Service (S3) bucket
-* **ImageBuildingStack**      - creates an image used for inference and pushes it to container registry, creates AWS CodePipeline and Elastic Container Registry (ECR)
-* **ModelServingStack**       - deploys a model for inference and configures endpoint, creates SageMaker Endpoint and underlying Elastic Compute Cloud (EC2) instance
-* **ModelConfigurationStack** - configures inference endpoint, invokes /configure API on SageMaker Endpoint
+![architecture diagram](images/project-architecture-diagram.jpg)
+
+The project consists of the following steps: 
+1. **ModelDownloadStack**      - creates AWS CodePipeline to download model files to Simple Storage Service (S3) bucket as an object store 
+2. **ImageBuildingStack**      - creates AWS CodePipeline to build Docker image used for inference and pushes it to Elastic Container Registry (ECR)
+3. **ModelServingStack**       - deploys a model for inference and configures SageMaker Endpoint. Underlying Elastic Compute Cloud (EC2) instance gets created.
+4. **ModelConfigurationStack** - configures inference endpoint from ModelServingStack by invoking /configure API on SageMaker Endpoint by using AWS Step Functions.
+
+All of the stacks can be found in in `./infrastructure` directory.
 
 ## Prerequisites
 
@@ -40,7 +47,7 @@ Use the following init script on MacOS and Linux or manually create and activate
 
 To add additional dependencies, for example other CDK libraries, add them to your `setup.py` file and rerun the `pip install -r requirements.txt` command.
 
-## CDDK deployment 
+## CDK deployment 
 ### To Create Resources / Deploy Stacks
 
 To deploy all stacks you can use `cdk-deploy-all-to` script: \
@@ -94,10 +101,10 @@ Only changing a model does not require rebuidling an image, and would take appro
 
 ## Inference
 
-1. Create input payload with your prompt text:
+1. Create input payload using your prompt text:
 ```python
 payload = {
-    "prompt": "Give concise answer to the question. Qiestion: How to define optimal shard size in Amazon Opensearch?",
+    "prompt": "Give concise answer to the question. Question: How to define optimal shard size in Amazon Opensearch?",
     "max_tokens": 128,
     "temperature": 0.1,
     "top_p": 0.5
