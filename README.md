@@ -3,7 +3,7 @@
 This code demonstrates how you can run Large Language Models (LLMs) on CPU-only instances including Graviton. We are using [Llama.cpp project](https://github.com/ggerganov/llama.cpp) and exposing an Sagemaker endpoint API for inference. Models are downloaded from [Hugging Face model hub](https://huggingface.co/models).
 The project can be deployed to be compatible to both ARM64 and x86 architectures. 
 
-## Project overview
+## Project Overview
 
 This project is built by using [AWS Cloud Development Kit](https://aws.amazon.com/cdk/)(AWS CDK)  with Python.
 The `cdk.json` file tells the CDK Toolkit how to execute your app.
@@ -23,12 +23,15 @@ AWS CDK app configuration file values are in `app-config.ini`:
 | inference.sagemaker_model_name | SageMaker endpoint name for model inference | llama-2-7b-chat |
 | inference.instance_type | Instance type used for SageMaker Endpoint | "ml.c7g.2xlarge" for ARM platform or "ml.g5.xlarge" for AMD platform |
 
+### Architecture
+
+![architecture diagram](images/project-architecture-diagram.jpg)
 
 The project consists of the following stacks in `./infrastructure` directory:
-* **ModelDownloadStack**      - downloads model files to an object store, it creates AWS CodePipeline and Simple Storage Service (S3) bucket
-* **ImageBuildingStack**      - creates an image used for inference and pushes it to container registry, creates AWS CodePipeline and Elastic Container Registry (ECR)
-* **ModelServingStack**       - deploys a model for inference and configures endpoint, creates SageMaker Endpoint and underlying Elastic Compute Cloud (EC2) instance
-* **ModelConfigurationStack** - configures inference endpoint, invokes /configure API on SageMaker Endpoint
+1. **ModelDownloadStack**      - downloads model files to an object store, it creates AWS CodePipeline and Simple Storage Service (S3) bucket
+2. **ImageBuildingStack**      - creates an image used for inference and pushes it to container registry, creates AWS CodePipeline and Elastic Container Registry (ECR)
+3. **ModelServingStack**       - deploys a model for inference and configures endpoint, creates SageMaker Endpoint and underlying Elastic Compute Cloud (EC2) instance
+4. **ModelConfigurationStack** - configures inference endpoint, invokes /configure API on SageMaker Endpoint
 
 ## Prerequisites
 
@@ -97,7 +100,7 @@ Only changing a model does not require rebuidling an image, and would take appro
 1. Create input payload using your prompt text:
 ```python
 payload = {
-    "prompt": "Give concise answer to the question. Qiestion: How to define optimal shard size in Amazon Opensearch?",
+    "prompt": "Give concise answer to the question. Question: How to define optimal shard size in Amazon Opensearch?",
     "max_tokens": 128,
     "temperature": 0.1,
     "top_p": 0.5
