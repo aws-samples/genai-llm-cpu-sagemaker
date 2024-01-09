@@ -107,17 +107,23 @@ for key, val in tags.items():
 
 # cdk-nag checks
 nag_suppressions = [
-    # {"id":"AwsSolutions-IAM5", "reason":"SageMaker policy need to have access to all objects in S3 bucket"},
+    {"id":"AwsSolutions-IAM5", "reason":"CodePipeline policy needs to have full access to assets S3 bucket"},
 ]
 
 for supression in nag_suppressions:
+    NagSuppressions.add_stack_suppressions(modelDownloadStack, [
+        NagPackSuppression(id=supression["id"],reason=supression["reason"])
+    ])
+    NagSuppressions.add_stack_suppressions(imageBuildingStack, [
+        NagPackSuppression(id=supression["id"],reason=supression["reason"])
+    ])
     NagSuppressions.add_stack_suppressions(modelServingStack, [
-        NagPackSuppression(
-            id=supression["id"],
-            reason=supression["reason"]
-        )
+        NagPackSuppression(id=supression["id"],reason=supression["reason"])
+    ])
+    NagSuppressions.add_stack_suppressions(modelConfigurationStack, [
+        NagPackSuppression(id=supression["id"],reason=supression["reason"])
     ])
 
-#cdk.Aspects.of(app).add(AwsSolutionsChecks(verbose=True))
+cdk.Aspects.of(app).add(AwsSolutionsChecks(verbose=True))
 
 app.synth()

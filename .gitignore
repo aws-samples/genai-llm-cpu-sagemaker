@@ -15,3 +15,4 @@ node_modules
 *.tar.gz
 *.gguf
 *.diff
+*.out

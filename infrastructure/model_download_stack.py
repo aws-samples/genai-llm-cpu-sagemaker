@@ -15,6 +15,7 @@ from aws_cdk import (
     aws_stepfunctions_tasks,
     aws_codepipeline, 
     aws_codepipeline_actions,
+    aws_kms,
     CfnOutput, Duration, RemovalPolicy, Stack,
 )
 
@@ -42,6 +43,8 @@ class ModelDownloadStack(Stack):
         bucket = aws_s3.Bucket(self, f"{MODEL_BUCKET_NAME}",
             versioned=True,
             removal_policy=RemovalPolicy.DESTROY,
+            server_access_logs_prefix="logs/",
+            enforce_ssl=True,
             auto_delete_objects=True
         )
 
@@ -50,6 +53,12 @@ class ModelDownloadStack(Stack):
         )
 
         standard_image = aws_codebuild.LinuxBuildImage.STANDARD_6_0
+
+        # Create an AWS managed KMS key
+        kms_key = aws_kms.Key( self, 'ModelCodeBuildKMSKey',
+            #alias='ModelCodeBuildKMSKeyAlias',
+            enable_key_rotation=True,
+            description='Managed key for AWS CodeBuild')
 
         codebuild_project = aws_codebuild.PipelineProject(self, f"{PROJECT_NAME}-model-download",
             build_spec=aws_codebuild.BuildSpec.from_source_filename(
@@ -67,6 +76,7 @@ class ModelDownloadStack(Stack):
                 "TAG": aws_codebuild.BuildEnvironmentVariable(
                     value='cdk')
             },
+            encryption_key=kms_key,
             description='Download Large Language Model files to object store',
             timeout=Duration.minutes(60),
         )
