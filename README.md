@@ -8,6 +8,8 @@ The project can be deployed to be compatible to both ARM64 and x86 architectures
 This project is built by using [AWS Cloud Development Kit](https://aws.amazon.com/cdk/)(AWS CDK)  with Python.
 The `cdk.json` file tells the CDK Toolkit how to execute your app.
 
+### Configuration
+
 AWS CDK app configuration file values are in `app-config.ini`:
 
 | Parameter | Description | Example value | 
@@ -27,11 +29,13 @@ AWS CDK app configuration file values are in `app-config.ini`:
 
 ![architecture diagram](images/project-architecture-diagram.jpg)
 
-The project consists of the following stacks in `./infrastructure` directory:
-1. **ModelDownloadStack**      - downloads model files to an object store, it creates AWS CodePipeline and Simple Storage Service (S3) bucket
-2. **ImageBuildingStack**      - creates an image used for inference and pushes it to container registry, creates AWS CodePipeline and Elastic Container Registry (ECR)
-3. **ModelServingStack**       - deploys a model for inference and configures endpoint, creates SageMaker Endpoint and underlying Elastic Compute Cloud (EC2) instance
-4. **ModelConfigurationStack** - configures inference endpoint, invokes /configure API on SageMaker Endpoint
+The project consists of the following steps: 
+1. **ModelDownloadStack**      - creates AWS CodePipeline to download model files to Simple Storage Service (S3) bucket as an object store 
+2. **ImageBuildingStack**      - creates AWS CodePipeline to build Docker image used for inference and pushes it to Elastic Container Registry (ECR)
+3. **ModelServingStack**       - deploys a model for inference and configures SageMaker Endpoint. Underlying Elastic Compute Cloud (EC2) instance gets created.
+4. **ModelConfigurationStack** - configures inference endpoint from ModelServingStack by invoking /configure API on SageMaker Endpoint by using AWS Step Functions.
+
+All of the stacks can be found in in `./infrastructure` directory.
 
 ## Prerequisites
 
