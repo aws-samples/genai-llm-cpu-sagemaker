@@ -45,6 +45,7 @@ class ModelDownloadStack(Stack):
             removal_policy=RemovalPolicy.DESTROY,
             server_access_logs_prefix="logs/",
             enforce_ssl=True,
+            encryption=aws_s3.BucketEncryption.S3_MANAGED,
             auto_delete_objects=True
         )
 
@@ -54,9 +55,7 @@ class ModelDownloadStack(Stack):
 
         standard_image = aws_codebuild.LinuxBuildImage.STANDARD_6_0
 
-        # Create an AWS managed KMS key
         kms_key = aws_kms.Key( self, 'ModelCodeBuildKMSKey',
-            #alias='ModelCodeBuildKMSKeyAlias',
             enable_key_rotation=True,
             description='Managed key for AWS CodeBuild')
 
