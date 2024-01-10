@@ -8,6 +8,7 @@ from aws_cdk import (
     aws_codepipeline,
     aws_codepipeline_actions,
     aws_kms,
+    aws_iam,
     App, Aws, CfnOutput, Duration, RemovalPolicy, Stack, CustomResource
 )
 import os
@@ -43,11 +44,44 @@ class ImageBuildingStack(Stack):
             auto_delete_images=True
         )
 
-        # Create an AWS managed KMS key
+        kms_policy = aws_iam.PolicyDocument(
+            statements=[aws_iam.PolicyStatement(
+                actions=[
+                    "kms:Encrypt",
+                    "kms:Decrypt",
+                    "kms:ReEncrypt*",
+                    "kms:GenerateDataKey*",
+                    "kms:DescribeKey"
+                ],
+                principals=[
+                    aws_iam.ServicePrincipal("codebuild.amazonaws.com")],
+                resources=["*"]
+            ), aws_iam.PolicyStatement(
+                actions=[
+                    "kms:Create*",
+                      "kms:Describe*",
+                      "kms:Enable*",
+                      "kms:List*",
+                      "kms:Put*",
+                      "kms:Update*",
+                      "kms:Revoke*",
+                      "kms:Disable*",
+                      "kms:Get*",
+                      "kms:Delete*",
+                      "kms:ScheduleKeyDeletion",
+                      "kms:CancelKeyDeletion"
+                ],
+                principals=[
+                    aws_iam.AccountRootPrincipal()],
+                resources=["*"]
+            )]
+        )
+
         kms_key = aws_kms.Key(self, 'ImageCodeBuildKMSKey',
-            #alias='ImageCodeBuildKMSKeyAlias',
             enable_key_rotation=True,
-            description='Managed key for AWS CodeBuild')
+            description='Managed key for AWS CodeBuild',
+            policy=kms_policy
+            )
 
         standard_image = aws_codebuild.LinuxBuildImage.STANDARD_6_0
         compute_type = aws_codebuild.ComputeType.X2_LARGE # to decrease wait time
