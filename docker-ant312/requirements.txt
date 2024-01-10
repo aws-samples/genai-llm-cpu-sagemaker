@@ -1,6 +1,0 @@
-fastapi
-boto3
-starlette
-pydantic
-uvicorn
-requests
