@@ -107,7 +107,8 @@ for key, val in tags.items():
 
 # cdk-nag checks
 nag_suppressions = [
-    {"id":"AwsSolutions-IAM5", "reason":"CodePipeline policy needs to have full access to assets S3 bucket"},
+    {"id": "AwsSolutions-IAM5", "reason": "CodePipeline policy needs to have full access to assets S3 bucket."},
+    {"id": "AwsSolutions-CB4", "reason": "CodeBuild does not have to encrypt data for the purpose of this sample code. Adding KMS key would incur additional cost."}
 ]
 
 for supression in nag_suppressions:
