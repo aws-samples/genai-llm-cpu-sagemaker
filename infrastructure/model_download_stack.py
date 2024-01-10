@@ -55,45 +55,6 @@ class ModelDownloadStack(Stack):
 
         standard_image = aws_codebuild.LinuxBuildImage.STANDARD_6_0
 
-        kms_policy = aws_iam.PolicyDocument(
-            statements=[aws_iam.PolicyStatement(
-                actions=[
-                    "kms:Encrypt",
-                    "kms:Decrypt",
-                    "kms:ReEncrypt*",
-                    "kms:GenerateDataKey*",
-                    "kms:DescribeKey"
-                ],
-                principals=[
-                    aws_iam.ServicePrincipal("codebuild.amazonaws.com")],
-                resources=["*"]
-            ), aws_iam.PolicyStatement(
-                actions=[
-                    "kms:Create*",
-                      "kms:Describe*",
-                      "kms:Enable*",
-                      "kms:List*",
-                      "kms:Put*",
-                      "kms:Update*",
-                      "kms:Revoke*",
-                      "kms:Disable*",
-                      "kms:Get*",
-                      "kms:Delete*",
-                      "kms:ScheduleKeyDeletion",
-                      "kms:CancelKeyDeletion"
-                ],
-                principals=[
-                    aws_iam.AccountRootPrincipal()],
-                resources=["*"]
-            )]
-        )
-
-        kms_key = aws_kms.Key( self, 'ModelCodeBuildKMSKey',
-            enable_key_rotation=True,
-            description='Managed key for AWS CodeBuild',
-            policy=kms_policy,
-        )
-
         codebuild_project = aws_codebuild.PipelineProject(self, f"{PROJECT_NAME}-model-download",
             build_spec=aws_codebuild.BuildSpec.from_source_filename(
                 filename='model_build_buildspec.yml'),
@@ -110,7 +71,6 @@ class ModelDownloadStack(Stack):
                 "TAG": aws_codebuild.BuildEnvironmentVariable(
                     value='cdk')
             },
-            encryption_key=kms_key,
             description='Download Large Language Model files to object store',
             timeout=Duration.minutes(60),
         )

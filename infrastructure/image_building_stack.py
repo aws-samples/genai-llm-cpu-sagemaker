@@ -44,45 +44,6 @@ class ImageBuildingStack(Stack):
             auto_delete_images=True
         )
 
-        kms_policy = aws_iam.PolicyDocument(
-            statements=[aws_iam.PolicyStatement(
-                actions=[
-                    "kms:Encrypt",
-                    "kms:Decrypt",
-                    "kms:ReEncrypt*",
-                    "kms:GenerateDataKey*",
-                    "kms:DescribeKey"
-                ],
-                principals=[
-                    aws_iam.ServicePrincipal("codebuild.amazonaws.com")],
-                resources=["*"]
-            ), aws_iam.PolicyStatement(
-                actions=[
-                    "kms:Create*",
-                      "kms:Describe*",
-                      "kms:Enable*",
-                      "kms:List*",
-                      "kms:Put*",
-                      "kms:Update*",
-                      "kms:Revoke*",
-                      "kms:Disable*",
-                      "kms:Get*",
-                      "kms:Delete*",
-                      "kms:ScheduleKeyDeletion",
-                      "kms:CancelKeyDeletion"
-                ],
-                principals=[
-                    aws_iam.AccountRootPrincipal()],
-                resources=["*"]
-            )]
-        )
-
-        kms_key = aws_kms.Key(self, 'ImageCodeBuildKMSKey',
-            enable_key_rotation=True,
-            description='Managed key for AWS CodeBuild',
-            policy=kms_policy
-            )
-
         standard_image = aws_codebuild.LinuxBuildImage.STANDARD_6_0
         compute_type = aws_codebuild.ComputeType.X2_LARGE # to decrease wait time
         build_spec = "docker_build_buildspec.yml"
@@ -110,7 +71,6 @@ class ImageBuildingStack(Stack):
                 "TAG": aws_codebuild.BuildEnvironmentVariable(
                     value='cdk')
             },
-            encryption_key=kms_key,
             description='Pipeline to build and push images to container registry',
             timeout=Duration.minutes(60),
         )
