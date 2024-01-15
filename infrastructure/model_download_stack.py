@@ -95,9 +95,32 @@ class ModelDownloadStack(Stack):
                         run_order=2,
                         )
 
+        s3_asset_policy = aws_iam.Policy(self, "s3-asset-bucket-policy",
+                                    statements=[aws_iam.PolicyStatement(
+                                        effect=aws_iam.Effect.ALLOW,
+                                        actions=[
+                                            "s3:ListBucket",
+                                            "s3:GetObject",
+                                            "s3:ListBucket",
+                                            "s3:ListBucketVersions",
+                                            "s3:GetBucketPolicy",
+                                            "s3:GetBucketAcl",
+                                          ],
+                                        resources=[f"arn:aws:s3:::{asset_bucket.s3_bucket_name}/*"]
+                                    )]
+                                )
+
+        pipeline_role = aws_iam.Role(
+            self, 'CodePipelineRole',
+            assumed_by=aws_iam.ServicePrincipal('codepipeline.amazonaws.com'),
+        )
+
+        pipeline_role.attach_inline_policy(s3_asset_policy)
+
         aws_codepipeline.Pipeline(self, "Pipeline",
             pipeline_name=f"{PROJECT_NAME}-model-download-pipeline",
             artifact_bucket=asset_bucket.bucket,
+            role=pipeline_role,
             stages=[aws_codepipeline.StageProps(
                 stage_name="Source",
                 actions=[source_action]
