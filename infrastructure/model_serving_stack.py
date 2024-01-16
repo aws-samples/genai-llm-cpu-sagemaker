@@ -9,14 +9,6 @@ from aws_cdk import (
     aws_s3_deployment
     )
 
-from sagemaker import (
-    script_uris, 
-    image_uris, 
-    model_uris
-    )
-
-import sagemaker
-
 from constructs import Construct
 from construct.sagemaker_endpoint_construct import SageMakerEndpointConstruct
 

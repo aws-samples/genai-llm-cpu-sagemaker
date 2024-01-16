@@ -1,4 +1,4 @@
-FROM public.ecr.aws/y0d1u8z0/llamacpp:cuda
+FROM ghcr.io/ggerganov/llama.cpp:full-cuda
 
 # Sets dumping log messages directly to stream instead of buffering
 ENV PYTHONUNBUFFERED=1

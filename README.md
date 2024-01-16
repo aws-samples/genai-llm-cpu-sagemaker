@@ -128,3 +128,11 @@ response_body = response['Body'].read().decode()
 ### Credits
 
 Built based on Sean Bradley's project that was modified to work with SageMaker endpoints.
+
+## Security
+
+See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications)  for more information.
+
+## License
+
+This library is licensed under the MIT-0 License. See the LICENSE file.
