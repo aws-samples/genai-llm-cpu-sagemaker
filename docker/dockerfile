@@ -1,4 +1,4 @@
-FROM public.ecr.aws/y0d1u8z0/llamacpp:arm64
+FROM ghcr.io/ggerganov/llama.cpp:full
 
 # Sets dumping log messages directly to stream instead of buffering
 ENV PYTHONUNBUFFERED=1
@@ -9,6 +9,8 @@ ENV PATH=$PATH:/app
 
 # The working directory in the Docker image
 WORKDIR /app
+
+RUN apt-get upgrade -y
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
