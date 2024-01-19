@@ -10,10 +10,12 @@ ENV PATH=$PATH:/app
 # The working directory in the Docker image
 WORKDIR /app
 
+RUN apt-get update 
 RUN apt-get upgrade -y
+RUN apt-get remove linux-libc-dev -y
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get install -y \
     unzip \
     libcurl4-openssl-dev \
     python3 \
