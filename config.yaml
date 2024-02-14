@@ -1,0 +1,14 @@
+project:
+  name: "llm-cpu"
+model:
+  bucket_prefix: "model-bucket"
+  hf_name: "TheBloke/Llama-2-7b-Chat-GGUF"
+  full_name: "llama-2-7b-chat.Q4_K_M.gguf"
+image:
+  repo_name: "model-image-repo"
+  platform: "ARM"
+  image_tag: "arm-latest"
+inference:
+  sagemaker_role_name: "sagemaker-execution-role"
+  sagemaker_model_name: "llama-2-7b-chat-arm"
+  instance_type: "ml.c7g.2xlarge"

@@ -14,9 +14,10 @@
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #!/usr/bin/env bash
+set -exu
 
 sleepwithcountdown() {
-  secs=$1
+  secs=$1 
   while [ $secs -gt 0 ]; do
     printf "\rcountdown: $secs\033[0K"
     sleep 1
