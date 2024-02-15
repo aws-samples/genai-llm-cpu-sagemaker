@@ -22,23 +22,20 @@ with open('config.yaml', 'r') as f:
 
 project_name = config['project']['name']
 
-model_bucket_prefix = config['model']['bucket_prefix']
 model_hugging_face_name = config['model']['hf_name']
 model_bucket_key_full_name = config['model']['full_name']
 
-image_repository_name = config['image']['repo_name']
 platform = config['image']['platform'].lower()
 image_tag = config['image']['image_tag']
 
-sagemaker_role_name = config['inference']['sagemaker_role_name']
 sagemaker_model_name = config['inference']['sagemaker_model_name']
-instance_type = config['inference']['instance_type']
+sagemaker_instance_type = config['inference']['instance_type']
 
 ### Validate input
 if platform not in ["arm", "amd"]:
     raise ValueError(f"[ERROR] Value {platform} of the \"image.platform\" parameter does not match one of the suported values: ['arm', 'amd']") 
 
-if platform not in ["arm"] and "g" in instance_type.split(".")[1] and instance_type.split(".")[1] not in ["g5"]:
+if platform not in ["arm"] and "g" in sagemaker_instance_type.split(".")[1] and sagemaker_instance_type.split(".")[1] not in ["g5"]:
     print("[WARNING] Platfrom for the image is not set to ARM, however, instance type potentially belongs to the AWS Graviton family.")
 
 ### Define app stacks
@@ -48,39 +45,13 @@ llamaCppStack = LlamaCppStack(app,
     "LlamaCppStack",
     env=environment,
     project_name=project_name,
-    model_bucket_prefix=model_bucket_prefix,
     model_bucket_key_full_name=model_bucket_key_full_name,
     model_hugging_face_name=model_hugging_face_name,
-    image_repo_name=image_repository_name,
     image_tag=image_tag,
-    image_platform=platform
+    image_platform=platform,
+    model_name=sagemaker_model_name,
+    model_instance_type=sagemaker_instance_type
     )
-
-# modelServingStack = ModelServingStack(app, 
-#     "ModelServingStack", 
-#     env=environment, 
-#     project_name=project_name, 
-#     sagemaker_role_name=sagemaker_role_name,
-#     instance_type=instance_type, 
-#     model_repository_uri=cdk.Fn.import_value("var-modelrepositoryuri"), 
-#     model_bucket_name=cdk.Fn.import_value("var-modelbucketname"), 
-#     sagemaker_model_name=sagemaker_model_name,
-#     model_repository_name=image_repository_name, 
-#     image_tag=image_tag,
-#     )
-
-# modelConfigurationStack = ModelConfigurationStack(app, 
-#     "ModelConfigurationStack",
-#     env=environment,
-#     project_name=project_name, 
-#     sagemaker_model_name=sagemaker_model_name,
-#     model_bucket_key=model_bucket_key_full_name,
-#     model_bucket_name=cdk.Fn.import_value("var-modelbucketname"),
-#     sagemaker_endpoint_name=cdk.Fn.import_value("var-sagemakerendpointname"),
-#     )
-
-# modelConfigurationStack.add_dependency(imageBuildingStack)
-# modelConfigurationStack.add_dependency(modelDownloadStack)
 
 # tags
 tags = {
