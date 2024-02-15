@@ -6,8 +6,6 @@ from cdk_nag import AwsSolutionsChecks, NagSuppressions, NagPackSuppression
 
 import yaml
 
-from infrastructure.model_serving_stack import ModelServingStack
-from infrastructure.model_configuration_stack import ModelConfigurationStack
 from infrastructure.llama_cpp_stack import LlamaCppStack
 
 ### Set environment
