@@ -222,7 +222,7 @@ class LlamaCppStack(Stack):
                             "s3:GetBucketPolicy",
                             "s3:GetBucketAcl",
                         ],
-                        resources=[bucket.bucket_arn]
+                        resources=[f"{bucket.bucket_arn}/*"]
                     )
                 ])
             }
@@ -289,7 +289,8 @@ class LlamaCppStack(Stack):
                 "SAGEMAKER_ENDPOINT_NAME": model_endpoint.attr_endpoint_name,
                 "MODEL_BUCKET_NAME": bucket.bucket_name,
                 "MODEL_BUCKET_KEY_NAME": model_bucket_key_full_name
-            }
+            },
+            timeout=Duration.minutes(5)
         )
         sagemaker_endpoint_configure_lambda.node.add_dependency(model_endpoint)
 
