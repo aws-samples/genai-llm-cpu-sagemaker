@@ -296,7 +296,7 @@ class LlamaCppStack(Stack):
 
         sagemaker_endpoint_configure_lambda.add_to_role_policy(iam.PolicyStatement(
             actions=["sagemaker:InvokeEndpoint"],
-            resources=["*"]
+            resources=[f"arn:aws:sagemaker:{self.region}:{self.account}:endpoint/*{model_name}*"]
         ))
 
         config_endpoint_cr_provider = cr.Provider(
