@@ -39,7 +39,6 @@ class LlamaCppStack(Stack):
             f"{project_name}-bucket",
             versioned=True,
             removal_policy=RemovalPolicy.DESTROY,
-            server_access_logs_prefix="logs/",
             enforce_ssl=True,
             encryption=s3.BucketEncryption.S3_MANAGED,
             auto_delete_objects=True
