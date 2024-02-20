@@ -1,11 +1,11 @@
 project:
-  name: "llmcpp-llama-2-7b-chat"
-model:
-  hf_name: "TheBloke/Llama-2-7b-Chat-GGUF"
-  full_name: "llama-2-7b-chat.Q4_K_M.gguf"
-image:
-  platform: "ARM"
-  image_tag: "arm-latest"
-inference:
-  sagemaker_model_name: "llama-2-7b-chat-arm"
-  instance_type: "ml.c7g.8xlarge"
+  image:
+    image_tag: arm-latest
+    platform: ARM
+  inference:
+    instance_type: ml.c7g.2xlarge
+    sagemaker_model_name: llama-2-7b-chat-arm
+  model:
+    full_name: llama-2-7b-chat.Q4_K_M.gguf
+    hf_name: TheBloke/Llama-2-7b-Chat-GGUF
+  name: llmcpp-llama-2-7b-chat
