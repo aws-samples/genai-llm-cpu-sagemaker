@@ -47,6 +47,7 @@ def main():
             commands.append(f"cdk destroy --context config_file='{config_file}' --output='{output_dir_name}' --require-approval=never --force")
         else:
             parser.print_help()
+            return
         print(commands[idx])
     
     
