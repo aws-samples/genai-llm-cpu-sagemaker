@@ -39,7 +39,6 @@ class LlamaCppStack(Stack):
             f"{project_name}-bucket",
             versioned=True,
             removal_policy=RemovalPolicy.DESTROY,
-            server_access_logs_prefix="logs/",
             enforce_ssl=True,
             encryption=s3.BucketEncryption.S3_MANAGED,
             auto_delete_objects=True
@@ -217,12 +216,27 @@ class LlamaCppStack(Stack):
                         actions=[
                             "s3:ListBucket",
                             "s3:GetObject",
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+                            "s3:HeadObject",
+=======
+>>>>>>> main
+>>>>>>> alexvtmain
                             "s3:ListBucket",
                             "s3:ListBucketVersions",
                             "s3:GetBucketPolicy",
                             "s3:GetBucketAcl",
                         ],
+<<<<<<< HEAD
                         resources=[f"{bucket.bucket_arn}/*"]
+=======
+<<<<<<< HEAD
+                        resources=[bucket.bucket_arn, f"{bucket.bucket_arn}/*"]
+=======
+                        resources=[f"{bucket.bucket_arn}/*"]
+>>>>>>> main
+>>>>>>> alexvtmain
                     )
                 ])
             }
@@ -284,19 +298,43 @@ class LlamaCppStack(Stack):
             f"{project_name}-configure-sagemaker-endpoint-function",
             runtime=lambda_.Runtime.PYTHON_3_12,
             handler="configure_endpoint.lambda_handler",
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+            timeout=Duration.minutes(3),
+=======
+>>>>>>> main
+>>>>>>> alexvtmain
             code=lambda_.Code.from_asset(os.path.join(os.path.abspath(os.curdir), "lambda/configure_endpoint")),
             environment={
                 "SAGEMAKER_ENDPOINT_NAME": model_endpoint.attr_endpoint_name,
                 "MODEL_BUCKET_NAME": bucket.bucket_name,
                 "MODEL_BUCKET_KEY_NAME": model_bucket_key_full_name
+<<<<<<< HEAD
             },
             timeout=Duration.minutes(5)
+=======
+<<<<<<< HEAD
+            }
+=======
+            },
+            timeout=Duration.minutes(5)
+>>>>>>> main
+>>>>>>> alexvtmain
         )
         sagemaker_endpoint_configure_lambda.node.add_dependency(model_endpoint)
 
         sagemaker_endpoint_configure_lambda.add_to_role_policy(iam.PolicyStatement(
             actions=["sagemaker:InvokeEndpoint"],
+<<<<<<< HEAD
             resources=[f"arn:aws:sagemaker:{self.region}:{self.account}:endpoint/*{model_name}*"]
+=======
+<<<<<<< HEAD
+            resources=["*"]
+=======
+            resources=[f"arn:aws:sagemaker:{self.region}:{self.account}:endpoint/*{model_name}*"]
+>>>>>>> main
+>>>>>>> alexvtmain
         ))
 
         config_endpoint_cr_provider = cr.Provider(

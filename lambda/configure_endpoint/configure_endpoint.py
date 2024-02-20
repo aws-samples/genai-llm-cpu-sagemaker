@@ -14,6 +14,7 @@ def lambda_handler(event, context):
             "key": environ['MODEL_BUCKET_KEY_NAME']
         }
     }
+    print(f' payload : {json.dumps(payload, default=str)}')
 
     if event_type in ['Create']:
         response = sagemaker_client.invoke_endpoint(

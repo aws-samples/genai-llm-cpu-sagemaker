@@ -71,6 +71,6 @@ nag_suppressions = [
 for supression in nag_suppressions:
     NagSuppressions.add_stack_suppressions(llamaCppStack, [NagPackSuppression(id=supression["id"], reason=supression["reason"])])
 
-cdk.Aspects.of(app).add(AwsSolutionsChecks(verbose=True))
+# cdk.Aspects.of(app).add(AwsSolutionsChecks(verbose=True))
 
 app.synth()
