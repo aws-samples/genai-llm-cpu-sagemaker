@@ -10,60 +10,56 @@ The `cdk.json` file tells the CDK Toolkit how to execute your app.
 
 ### Configuration
 
-AWS CDK app configuration file values are in `app-config.ini`:
+AWS CDK app configuration file values are in `config.yaml`:
 
 | Parameter | Description | Example value | 
 | :---    | :---    | :---    |
-| project.project_name | Used as prefix for AWS resources created with this app | cpu-llm |
-| model.model_bucket_prefix | Prefix for S3 bucket containing model files | my-model-bucket |
+| project.name | Used as prefix for AWS resources created with this app | cpu-llm |
 | model.model_hugging_face_name | [HuggingFace](https://huggingface.co) model name | TheBloke/Llama-2-7b-Chat-GGUF |
 | model.model_full_name | [HuggingFace](https://huggingface.co) model file full name | llama-2-7b-chat.Q4_K_M.gguf |
-| image.image_repository_name | Named of ECR repository containing model image | my-model-image-repository |
 | image.platform | Platfrom used to run inference and build an image; Values: ["ARM", "AMD"]  | ARM |
-| image.image_tag | Tag used to tag the image; | latest |
-| inference.sagemaker_role_name | SageMaker IAM role name | my-sagemaker-execution-role |
+| image.image_tag | Tag used to tag the image; | arm-latest |
 | inference.sagemaker_model_name | SageMaker endpoint name for model inference | llama-2-7b-chat |
-| inference.instance_type | Instance type used for SageMaker Endpoint | "ml.c7g.2xlarge" for ARM platform or "ml.g5.xlarge" for AMD platform |
+| inference.instance_type | Instance type used for SageMaker Endpoint | "ml.c7g.8xlarge" for ARM platform or "ml.g5.xlarge" for AMD platform |
 
 ### Architecture
 
 ![architecture diagram](images/project-architecture-diagram.jpg)
 
-The project consists of the following steps: 
-1. **ModelDownloadStack**      - creates AWS CodePipeline to download model files to Simple Storage Service (S3) bucket as an object store 
-2. **ImageBuildingStack**      - creates AWS CodePipeline to build Docker image used for inference and pushes it to Elastic Container Registry (ECR)
-3. **ModelServingStack**       - deploys a model for inference and configures SageMaker Endpoint. Underlying Elastic Compute Cloud (EC2) instance gets created.
-4. **ModelConfigurationStack** - configures inference endpoint from ModelServingStack by invoking /configure API on SageMaker Endpoint by using AWS Step Functions.
-
-All of the stacks can be found in in `./infrastructure` directory.
+The stack can be found in `./infrastructure` directory.
 
 ## Prerequisites
 
-Before proceeding any further, you need to identify and designate an AWS account required for the solution to work. You also need to create an AWS account profile in ~/.aws/credentials for the designated AWS account, if you don’t already have one. The profile needs to have sufficient permissions to run an [AWS Cloud Development Kit](https://aws.amazon.com/cdk/) (AWS CDK) stack. We recommend removing the profile when you’re finished with the testing. For more information about creating an AWS account profile, see [Configuring the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html). Python 3.11.x or later has to be installed on a machine.
-Note that this is not production ready code, and that it incures costs while provisioned, so please remember to destroy resources whe you no longer need them.
+Before proceeding any further, you need to identify and designate an AWS account required for the solution to work. 
+
+### Deploying from your local machine
+
+You need to create an AWS account profile in ~/.aws/credentials for the designated AWS account, if you don’t already have one. The profile needs to have sufficient permissions to run an [AWS Cloud Development Kit](https://aws.amazon.com/cdk/) (AWS CDK) stack. We recommend removing the profile when you’re finished with the testing. For more information about creating an AWS account profile, see [Configuring the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html). 
+
+Python 3.11.x or later has to be installed on a machine to run CDK code. 
+You will also need to install AWS CDK CLI as per [documentation](https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html).
+
+### Deploying from Cloud9 instance
+
+If you don't want to install the necessary software locally you can spin up [Cloud9](https://docs.aws.amazon.com/cloud9/latest/user-guide/create-environment-main.html) instance that already have all necessary software preinstalled. 
 
 ## CDK deployment 
-### To Create Resources / Deploy Stacks
+### To Create Resources / Deploy Stack
 
-To deploy all stacks you can use `cdk-deploy-all-to` script: \
-`./cicd/cdk-deploy-all-to.sh <account-id> <region-name>` 
+Open the terminal and run the following commands:
 
-For example: \
-`./cicd/cdk-deploy-all-to.sh 012345678901 us-east-1` 
-
-To deploy a single stack you can use `cdk-deploy-stack-to` script with an additional stack name as a parameter: \
-`./cicd/cdk-deploy-stack-to.sh <account-id> <region-name> ModelDownloadStack` 
-
-To check application drift, and compare specified stack and its dependencies with the deployed stack, you can use `cdk-drift` script (with optional -v for verbose output): \
-`./cicd/cdk-drift.sh <account-id> <region-name> -v` 
+```bash
+git clone git@ssh.gitlab.aws.dev:alexvt/llamacpp.git
+cd llamacpp
+python3 -m venv .venv
+source .venv/bin/activate
+pip3 install -r requirements.txt
+cdk deploy
+```
 
 ### To Destroy Resources / Clean-up
 
-Use destroy script to remove all stacks: \
-`./cicd/cdk-undeploy-from.sh <account-id> <region-name> --all` 
-
-Or use destroy script to remove a single stack: \
-`./cicd/cdk-undeploy-from.sh <account-id> <region-name> ModelServingStack` 
+Delete stack from Cloudfromation console.
 
 ### Model Selection / Change
 
@@ -71,54 +67,25 @@ Only changing a model does not require rebuidling an image, and would take appro
 
 1. Navigate to https://huggingface.co/TheBloke and choose GGUF model of your choice for example https://huggingface.co/TheBloke/llama-2-7B-Arguments-GGUF, scroll to provided files. Usually Q4_K_M is good enough compromise (based on our testing but feel free to try yourself).
 
-2. Update values of the variables in `app-config.ini` to use the new model:
-    * model_hugging_face_name - set Hugging Face model name e.g. "TheBloke/llama-2-7B-Arguments-GGUF"
-    * model_full_name         - set Hugging Face file full name e.g. "llama-2-7b-chat.Q4_K_M.gguf"
+2. Update values of the variables in `config.yaml` to use the new model:
+    * model.hf_name - set Hugging Face model name e.g. "TheBloke/llama-2-7B-Arguments-GGUF"
+    * model.full_name - set Hugging Face file full name e.g. "llama-2-7b-chat.Q4_K_M.gguf"
 
-3. Run a script to destroy previously used model's S3 bucket, Sagemaker configuration and endpoint and re-create new model resources: \
-`./cicd/cdk-change-model.sh <account-id> <region-name>` 
-> You will be prompted with a question: `This action would destroy your current deployment. Are you sure that you want to proceed?`, type Y to confirm. 
+3. Re-deploy stack by running `cdk deploy`
 
 ### Platform Selection / Change
 
-1. Update values of the variables in `app-config.ini` to use the different platform:
+1. Update values of the variables in `config.yaml` to use the different platform:
     * platform      - set platform (not case sensitive) e.g. "AMD"
     * instance_type - set instance type that matches platform e.g. "ml.g5.xlarge"
     * image_tag     - (optional) update image tag e.g. "amd-latest"
 
-2. Destroy existing SageMaker endpoint
-`./cicd/cdk-undeploy-from.sh <account-id> <region-name> ModelConfigurationStack`
-`./cicd/cdk-undeploy-from.sh <account-id> <region-name> ModelServingStack` 
+2. Re-deploy stack by running `cdk deploy` 
 
-3. Build a new image and create new SageMaker endpoint
-`./cicd/cdk-deploy-stack-to.sh <account-id> <region-name> ImageBuildingStack` 
-`./cicd/cdk-deploy-stack-to.sh <account-id> <region-name> ModelServingStack, ModelConfigurationStack` 
 
 ## Inference
 
-1. Create input payload using your prompt text:
-```python
-payload = {
-    "prompt": "Give concise answer to the question. Question: How to define optimal shard size in Amazon Opensearch?",
-    "max_tokens": 128,
-    "temperature": 0.1,
-    "top_p": 0.5
-}
-```
-
-2. Invoke SageMaker endpoint, using the stack output `ModelServingStack.sagemakerendpointname` as `ENDPOINT_NAME`:
-```python
-response = sagemaker_runtime.invoke_endpoint(
-        EndpointName=ENDPOINT_NAME,
-        Body=json.dumps(payload),
-        ContentType='application/json',
-    )
-```
-
-3. Get response body:
-```python 
-response_body = response['Body'].read().decode()
-```
+Use `notebooks/inference.ipynb` as an example. IAM credentials / IAM Role that you use to run the notebook has to allow `sagemaker:InvokeEndpoint` API calls. 
 
 ### Credits
 
