@@ -214,7 +214,6 @@ class LlamaCppStack(Stack):
                     ),
                     iam.PolicyStatement(
                         actions=[
-                            "s3:ListBucket",
                             "s3:GetObject",
                             "s3:HeadObject",
                             "s3:ListBucket",
@@ -290,13 +289,13 @@ class LlamaCppStack(Stack):
                 "SAGEMAKER_ENDPOINT_NAME": model_endpoint.attr_endpoint_name,
                 "MODEL_BUCKET_NAME": bucket.bucket_name,
                 "MODEL_BUCKET_KEY_NAME": model_bucket_key_full_name
-            }
+            },
         )
         sagemaker_endpoint_configure_lambda.node.add_dependency(model_endpoint)
 
         sagemaker_endpoint_configure_lambda.add_to_role_policy(iam.PolicyStatement(
             actions=["sagemaker:InvokeEndpoint"],
-            resources=["*"]
+            resources=[f"arn:aws:sagemaker:{self.region}:{self.account}:endpoint/*{model_name}*"]
         ))
 
         config_endpoint_cr_provider = cr.Provider(

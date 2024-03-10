@@ -35,6 +35,7 @@
     "@aws-cdk/core:target-partitions": [
       "aws",
       "aws-cn"
-    ]
+    ],
+    "config_file": "config.yaml"
   }
 }
