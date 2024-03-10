@@ -8,14 +8,14 @@ project:
     image_tag: "arm-latest"
   inference:
     sagemaker_model_name: "llama-2-7b-chat-arm"
-    instance_type: "ml.c7g.2xlarge"
-- name: "demo-project-2"
+    instance_type: "ml.c7g.8xlarge"
+- name: "mistral-7b"
   model:
-    hf_name: "TheBloke/Llama-2-7b-Chat-GGUF"
-    full_name: "llama-2-7b-chat.Q4_K_M.gguf"
+    hf_name: "TheBloke/CapybaraHermes-2.5-Mistral-7B-GGUF"
+    full_name: "capybarahermes-2.5-mistral-7b.Q4_K_M.gguf"
   image:
-    platform: "ARM"
-    image_tag: "arm-latest"
+    platform: "AMD"
+    image_tag: "amd-latest"
   inference:
-    sagemaker_model_name: "llama-2-7b-chat-arm"
-    instance_type: "ml.c7g.2xlarge"
+    sagemaker_model_name: "mistral-7b-g5"
+    instance_type: "ml.g5.xlarge"

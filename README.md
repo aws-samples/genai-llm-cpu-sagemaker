@@ -22,6 +22,8 @@ AWS CDK app configuration file values are in `config.yaml`:
 | inference.sagemaker_model_name | SageMaker endpoint name for model inference | llama-2-7b-chat |
 | inference.instance_type | Instance type used for SageMaker Endpoint | "ml.c7g.8xlarge" for ARM platform or "ml.g5.xlarge" for AMD platform |
 
+At the moment the only supported options are ARM-based inference on Amazon Graviton processors and AMD-based inference for CUDA-based GPUs (G5 are highly recommended). For GPU inference we do not support weights sharding across multiple GPU cards.  
+
 ### Architecture
 
 ![architecture diagram](images/project-architecture-diagram.jpg)
@@ -82,6 +84,14 @@ Only changing a model does not require rebuidling an image, and would take appro
 
 2. Re-deploy stack by running `cdk deploy` 
 
+
+## Multi-Model Deployment
+
+Sometimes you want to try multiple models from Hugging face to compare the quality of responses or latency. For this you can specify several models in `multimodel_config.yaml` and then use provided python script to start multiple model deployments in parallel.
+
+```bash
+python3 multimodel_cdk.py --deploy
+```
 
 ## Inference
 
