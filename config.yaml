@@ -3,7 +3,7 @@ project:
     image_tag: arm-latest
     platform: ARM
   inference:
-    instance_type: ml.c7g.2xlarge
+    instance_type: ml.c7g.8xlarge
     sagemaker_model_name: llama-2-7b-chat-arm
   model:
     full_name: llama-2-7b-chat.Q4_K_M.gguf

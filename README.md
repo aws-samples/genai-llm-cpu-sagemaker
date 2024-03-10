@@ -15,8 +15,8 @@ AWS CDK app configuration file values are in `config.yaml`:
 | Parameter | Description | Example value | 
 | :---    | :---    | :---    |
 | project.name | Used as prefix for AWS resources created with this app | cpu-llm |
-| model.model_hugging_face_name | [HuggingFace](https://huggingface.co) model name | TheBloke/Llama-2-7b-Chat-GGUF |
-| model.model_full_name | [HuggingFace](https://huggingface.co) model file full name | llama-2-7b-chat.Q4_K_M.gguf |
+| model.hf_name | [HuggingFace](https://huggingface.co) model name | TheBloke/Llama-2-7b-Chat-GGUF |
+| model.full_name | [HuggingFace](https://huggingface.co) model file full name | llama-2-7b-chat.Q4_K_M.gguf |
 | image.platform | Platfrom used to run inference and build an image; Values: ["ARM", "AMD"]  | ARM |
 | image.image_tag | Tag used to tag the image; | arm-latest |
 | inference.sagemaker_model_name | SageMaker endpoint name for model inference | llama-2-7b-chat |
@@ -49,7 +49,7 @@ If you don't want to install the necessary software locally you can spin up [Clo
 Open the terminal and run the following commands:
 
 ```bash
-git clone git@ssh.gitlab.aws.dev:alexvt/llamacpp.git
+git clone https://github.com/aws-samples/genai-llm-cpu-sagemaker
 cd llamacpp
 python3 -m venv .venv
 source .venv/bin/activate

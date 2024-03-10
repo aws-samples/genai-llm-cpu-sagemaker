@@ -135,7 +135,6 @@ def make_resData_stream(data, chat=False, time_now = 0, start=False):
             }
         ]
     }
-    slot_id = data["slot_id"]
     if (chat):
         if (start):
             resData["choices"][0]["delta"] =  {
