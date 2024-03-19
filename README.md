@@ -26,7 +26,7 @@ At the moment the only supported options are ARM-based inference on Amazon Gravi
 
 ### Architecture
 
-![architecture diagram](images/project-architecture-diagram.jpg)
+![architecture diagram](images/genai-llm-sagemaker.png)
 
 The stack can be found in `./infrastructure` directory.
 
