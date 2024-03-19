@@ -39,11 +39,13 @@ Before proceeding any further, you need to identify and designate an AWS account
 You need to create an AWS account profile in ~/.aws/credentials for the designated AWS account, if you don’t already have one. The profile needs to have sufficient permissions to run an [AWS Cloud Development Kit](https://aws.amazon.com/cdk/) (AWS CDK) stack. We recommend removing the profile when you’re finished with the testing. For more information about creating an AWS account profile, see [Configuring the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html). 
 
 Python 3.11.x or later has to be installed on a machine to run CDK code. 
-You will also need to install AWS CDK CLI as per [documentation](https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html).
+You will also need to install AWS CDK CLI as per [documentation](https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html) and [bootstrap](https://docs.aws.amazon.com/cdk/v2/guide/bootstrapping.html) your environment.  
+
+
 
 ### Deploying from Cloud9 instance
 
-If you don't want to install the necessary software locally you can spin up [Cloud9](https://docs.aws.amazon.com/cloud9/latest/user-guide/create-environment-main.html) instance that already have all necessary software preinstalled. 
+If you don't want to install the necessary software locally you can spin up [Cloud9](https://docs.aws.amazon.com/cloud9/latest/user-guide/create-environment-main.html) instance that already have all necessary software preinstalled, however if this is your first CDK deployment in the account and/or region you will need to [bootstrap](https://docs.aws.amazon.com/cdk/v2/guide/bootstrapping.html) your environment. 
 
 ## CDK deployment 
 ### To Create Resources / Deploy Stack
@@ -51,7 +53,13 @@ If you don't want to install the necessary software locally you can spin up [Clo
 Open the terminal and run the following commands:
 
 ```bash
-git clone https://github.com/aws-samples/genai-llm-cpu-sagemaker
+# uncomment the line below if you need to bootstrap your environment
+# replace ACCOUNT_ID and REGION placeholders with your actual
+# AWS account id and region where you deploy the application
+
+# cdk bootstrap aws://ACCOUNT_ID/REGION 
+
+git clone https://github.com/aws-samples/genai-llm-cpu-sagemaker llamacpp
 cd llamacpp
 python3 -m venv .venv
 source .venv/bin/activate
@@ -96,6 +104,8 @@ python3 multimodel_cdk.py --deploy
 ## Inference
 
 Use `notebooks/inference.ipynb` as an example. IAM credentials / IAM Role that you use to run the notebook has to allow `sagemaker:InvokeEndpoint` API calls. 
+
+If you don't have an existing environment to run Juputer notebooks, the easiest way to run the notebook would be to create new Sagemaker [notebook instance](https://docs.aws.amazon.com/sagemaker/latest/dg/howitworks-create-ws.html) using default settings and letting Sagemaker to create the necessary IAM role with enough permissions to interact with provisioned LLM endpoint. 
 
 ### Credits
 
