@@ -107,9 +107,6 @@ Use `notebooks/inference.ipynb` as an example. IAM credentials / IAM Role that y
 
 If you don't have an existing environment to run Juputer notebooks, the easiest way to run the notebook would be to create new Sagemaker [notebook instance](https://docs.aws.amazon.com/sagemaker/latest/dg/howitworks-create-ws.html) using default settings and letting Sagemaker to create the necessary IAM role with enough permissions to interact with provisioned LLM endpoint. 
 
-### Credits
-
-Built based on Sean Bradley's project that was modified to work with SageMaker endpoints.
 
 ## Security
 
