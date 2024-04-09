@@ -108,6 +108,10 @@ Use `notebooks/inference.ipynb` as an example. IAM credentials / IAM Role that y
 If you don't have an existing environment to run Juputer notebooks, the easiest way to run the notebook would be to create new Sagemaker [notebook instance](https://docs.aws.amazon.com/sagemaker/latest/dg/howitworks-create-ws.html) using default settings and letting Sagemaker to create the necessary IAM role with enough permissions to interact with provisioned LLM endpoint. 
 
 
+## Limitations
+
+At the moment there's [25GB limit](https://docs.aws.amazon.com/sagemaker/latest/dg/studio-byoi-specs.html) on custom docker image size. Please make sure the size of GGUF model file you want to use is below the limit. 
+
 ## Security
 
 See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications)  for more information.
