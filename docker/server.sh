@@ -13,5 +13,5 @@ else
   CPU_PER_SLOT=4
 fi
 
-killall server
-/app/server -m "$1" -c 2048 -t $(nproc --all) --host 0.0.0.0 --port 8081 -cb -np $(($(nproc --all) / $CPU_PER_SLOT)) -ngl $NGL &
+killall llama-server
+/app/llama-server -m "$1" -c 2048 -t $(nproc --all) --host 0.0.0.0 --port 8081 -cb -np $(($(nproc --all) / $CPU_PER_SLOT)) -ngl $NGL &
